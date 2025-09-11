@@ -328,6 +328,8 @@
     <div id="notification"></div>
 </div>
 <script>
+let currentLayer = 1;
+
 const ores = [
     {name:"Stone", chance:0, money:5, tier:"Layer"},
     {name:"Copper", chance:40, money:10, tier:"Common"},
@@ -515,7 +517,7 @@ function fillOreDropdown(layer) {
 }
 
 function showOreInfo(ore) {
-    let chanceText = ore.name === "StoneBlock" ? "Always" : `1/${ore.chance}`;
+    let chanceText = (ore.name === "StoneBlock" || ore.name === "Lava" || ore.name === "Basalt") ? "Always" : `1/${ore.chance}`;
     let tierClass = `rarity-${ore.tier.toLowerCase()}`;
     oreInfoBox.innerHTML = `
         <span class="${tierClass}" style="font-weight:bold;">${ore.name}</span><br>
@@ -631,13 +633,18 @@ function renderResult(res, minedBy = "") {
 // --- Leaderboard ---
 function getOreInfo(name) {
     if (name === "StoneBlock") return {name:"StoneBlock", chance:1, money:5, tier:"Layer"};
-    if (name === "LavaBlock") return {name:"LavaBlock", chance:1, money:100, tier:"Lava"};
-    return ores.find(o => name === o.name) || null;
+    if (name === "Lava") return {name:"Lava", chance:0, money:5, tier:"Lava"};
+    if (name === "Basalt") return {name:"Basalt", chance:0, money:5, tier:"Layer"};
+    // Search all ore lists
+    let found = ores.find(o => o.name === name)
+        || lavaOres.find(o => o.name === name)
+        || basaltOres.find(o => o.name === name);
+    return found || null;
 }
 
 function updateLeaderboard(oreName, tier) {
     const info = getOreInfo(oreName);
-    if (!info || info.name === "StoneBlock") return;
+    if (!info || info.name === "StoneBlock" || info.name === "Lava" || info.name === "Basalt") return;
     if (leaderboard.some(e => e.name === oreName)) return;
     leaderboard.push({name: oreName, tier: info.tier, chance: info.chance, time: Date.now()});
     leaderboard.sort((a, b) => b.chance - a.chance || a.time - b.time);
@@ -650,13 +657,14 @@ function renderLeaderboard() {
     const list = document.getElementById("leaderboardList");
     list.innerHTML = "";
     leaderboard.forEach((entry, idx) => {
+        if (!entry.name || entry.name === "Lava" || entry.name === "Basalt") return;
         const li = document.createElement("li");
         li.innerHTML = `<span class="rarity-${entry.tier.toLowerCase()}">${entry.name}</span> 
             <span style="color:#7cc7e5;">[${entry.tier}]</span> 
             <span style="color:#b0e57c;">Chance: 1/${entry.chance}</span>`;
         list.appendChild(li);
     });
-    if (leaderboard.length === 0) {
+    if (list.childNodes.length === 0) {
         list.innerHTML = "<li style='color:#555;'>No rare ores mined yet.</li>";
     }
 }
@@ -683,6 +691,7 @@ function renderInventory() {
     tbody.innerHTML = "";
     Object.keys(inventory).sort().forEach(name => {
         const info = getOreInfo(name);
+        if (!info) return; // skip unknown ores
         const v = inventory[name].variants;
         const variantStr = `Gold: ${v.gold}, Silver: ${v.silver}, Ionized: ${v.ionized}, Quantum: ${v.quantum}, Plain: ${v.plain}`;
         const tr = document.createElement("tr");
