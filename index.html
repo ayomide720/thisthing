@@ -2,260 +2,424 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Mining Game with AutoMine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mining Game</title>
 <style>
-    body {
-        background: linear-gradient(135deg, #232526 0%, #414345 100%);
-        min-height: 100vh;
-        margin: 0;
-        font-family: 'Segoe UI', 'Roboto', monospace;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    :root {
+        --bg-color: #0d0f12;
+        --card-bg: #161920;
+        --card-border: #232733;
+        --text-main: #f0f3f8;
+        --text-muted: #8a94a6;
+        --accent-gold: #fbbf24;
+        --accent-blue: #38bdf8;
+        --accent-green: #4ade80;
+        --accent-purple: #c084fc;
+        --accent-red: #f87171;
+        --btn-bg: #222734;
+        --btn-hover: #2d3446;
     }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
     .container {
-        background: #181a1b;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: 16px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        padding: 32px 24px 24px 24px;
-        width: 420px;
-        max-width: 95vw;
+        width: 100%;
+        max-width: 480px;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         position: relative;
     }
-    h1 {
-        text-align: center;
-        color: #fff;
-        margin-bottom: 12px;
-        font-size: 2em;
-        letter-spacing: 2px;
-    }
-    #money {
-        font-size: 1.3em;
-        color: #ffd700;
-        text-align: center;
-        margin-bottom: 8px;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-    #blocksMined {
-        font-size: 1em;
-        color: #7cc7e5;
-        text-align: center;
-        margin-bottom: 16px;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-    .btn-row {
+
+    /* Top Nav Buttons */
+    .nav-bar {
         display: flex;
-        justify-content: space-between;
-        margin-bottom: 16px;
         gap: 8px;
+        margin-bottom: 20px;
     }
-    button, select {
+
+    .nav-btn {
         flex: 1;
-        padding: 10px 0;
-        background: #232526;
-        color: #fff;
-        border: none;
+        padding: 10px;
+        background: var(--btn-bg);
+        border: 1px solid var(--card-border);
+        color: var(--text-main);
         border-radius: 8px;
-        font-size: 1em;
+        font-weight: 600;
+        font-size: 0.875rem;
         cursor: pointer;
-        transition: background 0.2s, transform 0.1s;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        margin-right: 0;
+        transition: all 0.2s ease;
     }
-    select {
-        margin-bottom: 16px;
-        padding: 10px 8px;
-        font-size: 1em;
-        background: #232526;
-        color: #ffd700;
-        border: 1px solid #333;
-        width: 100%;
-        box-sizing: border-box;
+
+    .nav-btn:hover {
+        background: var(--btn-hover);
+        border-color: #3b4254;
     }
-    button:hover, button:focus, select:focus {
-        background: #414345;
+
+    /* Header & Stats Display */
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 12px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--card-border);
+        padding: 12px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    #money { color: var(--accent-gold); }
+    #blocksMined { color: var(--accent-blue); }
+
+    /* Controls & Selects */
+    .controls-panel {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.875rem;
+    }
+
+    input[type="number"], select {
+        background: var(--btn-bg);
+        border: 1px solid var(--card-border);
+        color: var(--text-main);
+        padding: 8px 12px;
+        border-radius: 6px;
         outline: none;
-        transform: translateY(-2px) scale(1.03);
+        font-size: 0.875rem;
     }
-    #output {
-        background: #111;
-        color: #eee;
-        white-space: pre-wrap;
-        font-family: 'Fira Mono', 'Consolas', monospace;
-        font-size: 1em;
-        border-radius: 8px;
-        border: 1px solid #333;
-        padding: 14px;
-        min-height: 180px;
-        max-height: 260px;
-        overflow-y: auto;
-        margin-top: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+
+    input[type="number"] {
+        width: 70px;
+        text-align: center;
     }
-    .gold { color: #ffd700; font-weight: bold; }
-    .silver { color: #c0c0c0; font-weight: bold; }
-    .ionized { color: #00bfff; font-weight: bold; }
-    .quantum { color: #da70d6; font-weight: bold; }
-    .layer { color: #555; }
-    .rarity-common { color: #b0e57c; }
-    .rarity-rare { color: #7cc7e5; }
-    .rarity-master { color: #e57c7c; }
-    .rarity-surreal { color: #e5a97c; }
-    .rarity-mythic { color: #da70d6; }
-    .rarity-layer { color: #555; }
-    .rarity-lava { color: #ff4500; }
-    #inventoryToggle, #blacksmithToggle, #gearsToggle {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        z-index: 20;
-        background: #232526;
-        color: #ffd700;
-        border-radius: 8px;
-        border: none;
-        font-size: 1em;
-        font-weight: bold;
-        padding: 8px 16px;
+
+    select {
+        width: 100%;
         cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        transition: background 0.2s;
     }
-    #blacksmithToggle {
-        left: 120px;
+
+    .badge {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.05);
+        padding: 4px 8px;
+        border-radius: 4px;
     }
-    #gearsToggle {
-        left: 228px;
+
+    /* Ore Info Box */
+    #oreInfoBox {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        font-size: 0.875rem;
+        line-height: 1.5;
     }
-    #inventoryToggle:hover, #blacksmithToggle:hover, #gearsToggle:hover {
-        background: #414345;
+
+    /* Leaderboard Box */
+    #leaderboardBox {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 20px;
     }
-    #inventoryPanel, #blacksmithPanel, #gearsPanel {
+
+    #leaderboardBox b {
+        display: block;
+        font-size: 0.875rem;
+        margin-bottom: 8px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    #leaderboardList {
+        padding-left: 20px;
+        font-size: 0.875rem;
+    }
+
+    #leaderboardList li {
+        margin-bottom: 4px;
+    }
+
+    /* Action Buttons */
+    .action-row {
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .action-btn {
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    #mineBtn {
+        background: var(--accent-blue);
+        color: #000;
+    }
+
+    #mineBtn:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
+
+    #autoBtn {
+        background: var(--accent-gold);
+        color: #000;
+    }
+
+    #autoBtn:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
+
+    #clearBtn {
+        background: var(--btn-bg);
+        color: var(--text-muted);
+        border: 1px solid var(--card-border);
+    }
+
+    #clearBtn:hover {
+        background: var(--btn-hover);
+        color: var(--text-main);
+    }
+
+    /* Console Logs Output */
+    #output {
+        background: #090a0f;
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 12px;
+        height: 180px;
+        overflow-y: auto;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.8125rem;
+        line-height: 1.6;
+        color: var(--text-muted);
+    }
+
+    /* Panels (Modal overlays) */
+    .panel {
         display: none;
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        min-height: 100%;
-        background: rgba(24,26,27,0.98);
+        height: 100%;
+        background: var(--card-bg);
         border-radius: 16px;
         z-index: 100;
-        padding: 32px 24px 24px 24px;
+        padding: 24px;
         box-sizing: border-box;
-        color: #ffd700;
+        overflow-y: auto;
     }
-    #inventoryPanel h2, #blacksmithPanel h2, #gearsPanel h2 {
-        margin-top: 0;
-        margin-bottom: 12px;
-        color: #ffd700;
-        font-size: 1.3em;
-        text-align: left;
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--card-border);
     }
-    #inventoryPanel table, #blacksmithPanel table {
-        width: 100%;
-        margin-top: 8px;
-        color: #eee;
-        font-size: 0.97em;
-        border-collapse: collapse;
+
+    .panel-header h2 {
+        font-size: 1.25rem;
     }
-    #inventoryPanel th, #inventoryPanel td, #blacksmithPanel th, #blacksmithPanel td {
-        text-align: left;
-        padding: 6px 4px;
-        border-bottom: 1px solid #333;
-    }
-    #inventoryPanel th, #blacksmithPanel th {
-        color: #ffd700;
-        background: #181a1b;
-    }
-    #inventoryPanel td.variants {
-        font-size: 0.95em;
-        color: #b0e57c;
-    }
-    #closeInventory, #closeBlacksmith, #closeGears {
-        position: absolute;
-        top: 18px;
-        right: 18px;
-        background: #414345;
-        color: #fff;
-        border: none;
+
+    .close-btn {
+        background: var(--btn-bg);
+        border: 1px solid var(--card-border);
+        color: var(--text-main);
+        padding: 6px 12px;
         border-radius: 6px;
-        padding: 4px 12px;
-        font-size: 1em;
         cursor: pointer;
-        font-weight: bold;
+        font-size: 0.875rem;
     }
-    #notification {
-        position: fixed;
-        right: 32px;
-        bottom: 32px;
-        z-index: 999;
-        display: none;
-        background: #232526;
-        color: #ffd700;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 1em;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-        font-weight: bold;
-        min-width: 180px;
-        text-align: center;
-    }
-    .progress-bar-bg {
-        background: #333;
-        border-radius: 6px;
+
+    /* Tables */
+    table {
         width: 100%;
-        height: 18px;
-        margin-top: 6px;
-        margin-bottom: 12px;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        margin-top: 10px;
+    }
+
+    th, td {
+        padding: 10px 8px;
+        text-align: left;
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    th {
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    /* Progress bar */
+    .progress-bar-bg {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        height: 10px;
+        width: 100%;
+        margin: 8px 0 16px 0;
         overflow: hidden;
     }
+
     .progress-bar-fill {
-        background: linear-gradient(90deg, #ffd700 0%, #b0e57c 100%);
+        background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
         height: 100%;
-        border-radius: 6px;
-        transition: width 0.3s;
+        width: 0%;
+        transition: width 0.3s ease;
     }
-    .progress-label {
-        font-size: 0.95em;
-        color: #ffd700;
-        margin-bottom: 2px;
-        display: block;
+
+    /* Notifications */
+    #notification {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--btn-hover);
+        color: var(--text-main);
+        border: 1px solid var(--accent-blue);
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 999;
     }
+
+    /* Rare Colors */
+    .gold { color: var(--accent-gold); font-weight: bold; }
+    .silver { color: #cbd5e1; font-weight: bold; }
+    .ionized { color: var(--accent-blue); font-weight: bold; }
+    .quantum { color: var(--accent-purple); font-weight: bold; }
+    .rarity-common { color: var(--accent-green); }
+    .rarity-uncommon { color: #2dd4bf; }
+    .rarity-rare { color: var(--accent-blue); }
+    .rarity-master { color: var(--accent-purple); }
+    .rarity-surreal { color: #f472b6; }
+    .rarity-mythic { color: var(--accent-gold); }
+    .rarity-exotic { color: #fb923c; }
+    .rarity-exquisite { color: #e879f9; }
+    .rarity-transcendent { color: #a855f7; }
+    .rarity-enigmatic { color: #f43f5e; }
+    .rarity-unfathomable { color: #6366f1; }
+    .rarity-layer { color: var(--text-muted); }
+    .rarity-lava { color: var(--accent-red); }
 </style>
 </head>
 <body>
+
 <div class="container">
-    <button id="inventoryToggle">Inventory</button>
-    <button id="blacksmithToggle">Blacksmith</button>
-    <button id="gearsToggle">Gears</button>
-    <div id="inventoryPanel">
-        <button id="closeInventory">Close</button>
-        <h2>Inventory</h2>
+    <!-- Navigation -->
+    <div class="nav-bar">
+        <button class="nav-btn" id="inventoryToggle">Inventory</button>
+        <button class="nav-btn" id="blacksmithToggle">Blacksmith</button>
+        <button class="nav-btn" id="gearsToggle">Gears</button>
+    </div>
+
+    <!-- Inventory Modal -->
+    <div id="inventoryPanel" class="panel">
+        <div class="panel-header">
+            <h2>Inventory</h2>
+            <button class="close-btn" id="closeInventory">Close</button>
+        </div>
         <table>
             <thead>
                 <tr>
                     <th>Ore</th>
-                    <th>Count</th>
+                    <th style="text-align:right;">Count</th>
                     <th>Variants</th>
                 </tr>
             </thead>
             <tbody id="inventoryTableBody"></tbody>
         </table>
     </div>
-    <div id="blacksmithPanel">
-        <button id="closeBlacksmith">Close</button>
-        <h2>Blacksmith</h2>
+
+    <!-- Blacksmith Modal -->
+    <div id="blacksmithPanel" class="panel">
+        <div class="panel-header">
+            <h2>Blacksmith</h2>
+            <button class="close-btn" id="closeBlacksmith">Close</button>
+        </div>
         <div>
             <b>Stone Pickaxe Recipe</b>
-            <div class="progress-label" id="stonePickaxeProgressLabel"></div>
+            <div id="stonePickaxeProgressLabel" style="font-size:0.875rem; color: var(--text-muted); margin-top:4px;"></div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="stonePickaxeProgressBar" style="width:0%"></div>
+                <div class="progress-bar-fill" id="stonePickaxeProgressBar"></div>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>Requirement</th>
+                        <th>Item</th>
                         <th>Owned</th>
                         <th>Needed</th>
                         <th>%</th>
@@ -282,51 +446,89 @@
                     </tr>
                 </tbody>
             </table>
-            <button id="buyStonePickaxeBlacksmith" style="margin-top:12px;">Buy Stone Pickaxe</button>
-            <span id="blacksmithPickaxeInfo" style="color:#b0e57c;margin-left:12px;"></span>
+            <button class="nav-btn" id="buyStonePickaxeBlacksmith" style="margin-top:16px; width:100%;">Craft Stone Pickaxe</button>
+            <div id="blacksmithPickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-top:8px;"></div>
         </div>
     </div>
-    <div id="gearsPanel">
-        <button id="closeGears">Close</button>
-        <h2>Gears</h2>
+
+    <!-- Gears Modal -->
+    <div id="gearsPanel" class="panel">
+        <div class="panel-header">
+            <h2>Gears</h2>
+            <button class="close-btn" id="closeGears">Close</button>
+        </div>
         <div>
             <b>Speed Coil</b>
-            <div id="speedCoilStatus" style="margin-bottom:8px;"></div>
-            <div>Recipe: $1000</div>
-            <button id="craftSpeedCoil" style="margin-top:8px;">Craft Speed Coil</button>
-            <span id="speedCoilInfo" style="color:#b0e57c;margin-left:12px;">Reduces mining speed by 10ms.</span>
+            <div id="speedCoilStatus" style="font-size:0.875rem; color: var(--text-muted); margin: 4px 0;"></div>
+            <div style="font-size:0.875rem; margin-bottom: 8px;">Cost: $1,000</div>
+            <button class="nav-btn" id="craftSpeedCoil" style="width:100%;">Craft Speed Coil</button>
+            <div id="speedCoilInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-top:8px;">Reduces mining interval by 10ms.</div>
         </div>
     </div>
-    <h1>⛏️ Mining Game</h1>
-    <div id="money" aria-live="polite">Money: $0</div>
-    <div id="blocksMined">Blocks Mined: 0</div>
-    <div style="margin-bottom:16px;">
-        <label for="luckInput" style="color:#ffd700;font-weight:bold;">Luck Multiplier:</label>
-        <input id="luckInput" type="number" min="1" step="0.01" value="1" style="width:80px;margin-left:8px;">
-        <span id="luckDisplay" style="color:#7cc7e5;margin-left:12px;">Current Luck: 1x</span>
-        <span id="speedDisplay" style="color:#7cc7e5;margin-left:12px;">Mining Speed: 50ms</span>
+
+    <!-- Main Header -->
+    <div class="header">
+        <h1>⛏️ Mining Simulator</h1>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Balance</div>
+                <div class="stat-value" id="money">$0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Blocks Mined</div>
+                <div class="stat-value" id="blocksMined">0</div>
+            </div>
+        </div>
     </div>
-    <div id="pickaxeInfo" style="color:#b0e57c;margin-bottom:16px;"></div>
-    <select id="layerSelect">
+
+    <!-- Controls -->
+    <div class="controls-panel">
+        <div class="control-row">
+            <label for="luckInput" style="font-weight:600;">Luck Multiplier</label>
+            <div>
+                <input id="luckInput" type="number" min="1" step="0.01" value="1">
+                <span class="badge" id="luckDisplay">1x</span>
+            </div>
+        </div>
+        <div class="control-row">
+            <span style="font-weight:600;">Mining Speed</span>
+            <span class="badge" id="speedDisplay">50ms</span>
+        </div>
+    </div>
+
+    <div id="pickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-bottom: 12px; text-align: center;"></div>
+
+    <select id="layerSelect" style="margin-bottom:12px;">
         <option value="1">Layer 1 (Normal)</option>
         <option value="2">Layer 2 (Lava Layer)</option>
         <option value="3">Basalt Layer</option>
     </select>
-    <label for="oreInfoSelect" style="color:#ffd700;font-weight:bold;display:block;margin-bottom:6px;">Ore Index</label>
-    <select id="oreInfoSelect" style="margin-bottom:10px;"></select>
-    <div id="oreInfoBox" style="background:#232526;color:#ffd700;border-radius:8px;padding:10px 12px;margin-bottom:18px;font-size:1em;min-height:38px;"></div>
-    <div id="leaderboardBox" style="background:#232526;color:#ffd700;border-radius:8px;padding:10px 12px;margin-bottom:18px;font-size:1em;">
+
+    <div class="control-row" style="margin-bottom: 6px;">
+        <label for="oreInfoSelect" style="font-size:0.75rem; color: var(--text-muted); text-transform:uppercase;">Ore Index</label>
+    </div>
+    <select id="oreInfoSelect" style="margin-bottom:12px;"></select>
+    
+    <div id="oreInfoBox"></div>
+
+    <div id="leaderboardBox">
         <b>Rarest Ore Leaderboard</b>
-        <ol id="leaderboardList" style="color:#eee;margin-top:8px;"></ol>
+        <ol id="leaderboardList"></ol>
     </div>
-    <div class="btn-row">
-        <button id="mineBtn">Mine 1x</button>
-        <button id="autoBtn">Start AutoMine</button>
-        <button id="clearBtn">Clear Log</button>
+
+    <!-- Main Actions -->
+    <div class="action-row">
+        <button class="action-btn" id="mineBtn">Mine 1x</button>
+        <button class="action-btn" id="autoBtn">Auto Mine</button>
+        <button class="action-btn" id="clearBtn">Clear</button>
     </div>
+
+    <!-- Output Display -->
     <div id="output"></div>
-    <div id="notification"></div>
+
+    <div id="notification">Notification message</div>
 </div>
+
 <script>
 let currentLayer = 1;
 
@@ -359,7 +561,6 @@ const ores = [
     {name:"Endozivite", chance:247010000, money:100000, tier:"Unfathomable"}
 ];
 const lavaOres = [
-    // Common (0 – 999)
     {name:"Scoria", chance:150, money:10, tier:"Common"},
     {name:"Ashrock", chance:250, money:12, tier:"Common"},
     {name:"Cinderite", chance:400, money:15, tier:"Common"},
@@ -367,7 +568,6 @@ const lavaOres = [
     {name:"Burnite", chance:700, money:22, tier:"Common"},
     {name:"Smolderstone", chance:850, money:25, tier:"Common"},
     {name:"Coalglass", chance:999, money:30, tier:"Common"},
-    // Uncommon (1,000 – 9,999)
     {name:"Magmaite", chance:1500, money:40, tier:"Uncommon"},
     {name:"Pyricite", chance:2500, money:50, tier:"Uncommon"},
     {name:"Volcanite", chance:4000, money:65, tier:"Uncommon"},
@@ -375,7 +575,6 @@ const lavaOres = [
     {name:"Charcrystal", chance:7000, money:100, tier:"Uncommon"},
     {name:"Ashenite", chance:8500, money:120, tier:"Uncommon"},
     {name:"Crimsonrock", chance:9999, money:140, tier:"Uncommon"},
-    // Rare (10,000 – 30,000)
     {name:"Emberite", chance:12000, money:180, tier:"Rare"},
     {name:"Ignicite", chance:15000, money:220, tier:"Rare"},
     {name:"Fumarite", chance:18000, money:260, tier:"Rare"},
@@ -383,7 +582,6 @@ const lavaOres = [
     {name:"Infernium", chance:24000, money:350, tier:"Rare"},
     {name:"Searite", chance:27000, money:400, tier:"Rare"},
     {name:"Lavalite", chance:30000, money:450, tier:"Rare"},
-    // Master (30,001 – 89,000)
     {name:"Basaltium", chance:35000, money:500, tier:"Master"},
     {name:"Sulfurite", chance:42000, money:600, tier:"Master"},
     {name:"Ignarock", chance:50000, money:700, tier:"Master"},
@@ -391,34 +589,26 @@ const lavaOres = [
     {name:"Volthera", chance:66000, money:900, tier:"Master"},
     {name:"Crimsonite", chance:77000, money:1000, tier:"Master"},
     {name:"Smeltstone", chance:89000, money:1100, tier:"Master"},
-    // Surreal (89,001 – 499,999)
     {name:"Volcryst", chance:120000, money:1400, tier:"Surreal"},
     {name:"Infernite", chance:200000, money:1800, tier:"Surreal"},
     {name:"Ashveil", chance:300000, money:2200, tier:"Surreal"},
     {name:"Blazestone", chance:400000, money:2600, tier:"Surreal"},
     {name:"Pyrosoul", chance:490000, money:3000, tier:"Surreal"},
-    // Mythic (500,000 – 999,999)
     {name:"Oblivorite", chance:550000, money:3500, tier:"Mythic"},
     {name:"Hellcore", chance:650000, money:4000, tier:"Mythic"},
     {name:"Magmora", chance:750000, money:4500, tier:"Mythic"},
     {name:"Cindrath", chance:850000, money:5000, tier:"Mythic"},
     {name:"Flareborn", chance:950000, money:5500, tier:"Mythic"},
-    // Exotic (1,000,000 – 7,500,000)
     {name:"Lavasoul", chance:2000000, money:7000, tier:"Exotic"},
     {name:"Dragonfire", chance:6500000, money:12000, tier:"Exotic"},
-    // Exquisite (7,500,001 – 15,000,000)
     {name:"Hellstone", chance:8500000, money:18000, tier:"Exquisite"},
     {name:"Blazegem", chance:14000000, money:25000, tier:"Exquisite"},
-    // Transcendent (15,000,001 – 49,999,999)
     {name:"Molteniron", chance:20000000, money:35000, tier:"Transcendent"},
     {name:"Pyraether", chance:45000000, money:50000, tier:"Transcendent"},
-    // Enigmatic (50,000,000 – 99,999,999)
     {name:"Oblivinite", chance:55000000, money:75000, tier:"Enigmatic"},
     {name:"Cindralith", chance:95000000, money:100000, tier:"Enigmatic"},
-    // Unfathomable (100,000,000 – 774,999,999)
     {name:"Phlegron", chance:200000000, money:150000, tier:"Unfathomable"},
     {name:"Erebrium", chance:700000000, money:300000, tier:"Unfathomable"},
-    // Otherworl-dly (775,000,000+)
     {name:"Pyroxis", chance:800000000, money:500000, tier:"Otherworldly"}
 ];
 const basaltOres = [
@@ -457,10 +647,8 @@ const variants = [
     {name:"quantum", chance:40, multiplier:3}
 ];
 
-// --- Gear system ---
 let gears = { speedCoil: false };
 
-// --- Persistence helpers ---
 function saveData() {
     localStorage.setItem("mining_leaderboard", JSON.stringify(leaderboard));
     localStorage.setItem("mining_inventory", JSON.stringify(inventory));
@@ -481,7 +669,6 @@ function loadData() {
     gears = g ? JSON.parse(g) : { speedCoil: false };
 }
 
-// --- Leaderboard and Inventory Data ---
 let leaderboard = [];
 let inventory = {};
 let blocksMined = 0;
@@ -492,8 +679,6 @@ loadData();
 const output = document.getElementById("output");
 const moneyDiv = document.getElementById("money");
 const blocksMinedDiv = document.getElementById("blocksMined");
-
-// --- Ore Info Dropdown ---
 const oreInfoSelect = document.getElementById("oreInfoSelect");
 const oreInfoBox = document.getElementById("oreInfoBox");
 
@@ -520,10 +705,10 @@ function showOreInfo(ore) {
     let chanceText = (ore.name === "StoneBlock" || ore.name === "Lava" || ore.name === "Basalt") ? "Always" : `1/${ore.chance}`;
     let tierClass = `rarity-${ore.tier.toLowerCase()}`;
     oreInfoBox.innerHTML = `
-        <span class="${tierClass}" style="font-weight:bold;">${ore.name}</span><br>
-        <span>Tier: <span class="${tierClass}">${ore.tier}</span></span><br>
-        <span>Chance: <span style="color:#7cc7e5;">${chanceText}</span></span><br>
-        <span>Money: <span style="color:#b0e57c;">$${ore.money}</span></span>
+        <span class="${tierClass}" style="font-weight:bold; font-size: 1rem;">${ore.name}</span><br>
+        <span style="color: var(--text-muted);">Tier:</span> <span class="${tierClass}">${ore.tier}</span> &bull; 
+        <span style="color: var(--text-muted);">Chance:</span> <span style="color:var(--accent-blue);">${chanceText}</span> &bull; 
+        <span style="color: var(--text-muted);">Value:</span> <span style="color:var(--accent-green);">$${ore.money}</span>
     `;
 }
 
@@ -541,7 +726,6 @@ oreInfoSelect.onchange = function() {
 
 const lavaLayerBlock = {name:"Lava", chance:0, money:5, tier:"Lava"};
 
-// --- Mining logic ---
 let autoMining = false;
 let autoInterval = null;
 
@@ -554,7 +738,7 @@ document.getElementById("layerSelect").onchange = function() {
         autoMining = false;
         clearInterval(autoInterval);
         autoInterval = null;
-        document.getElementById("autoBtn").textContent = "Start AutoMine";
+        document.getElementById("autoBtn").textContent = "Auto Mine";
     }
 };
 
@@ -590,7 +774,6 @@ function mineOnce() {
             return {oreName: displayName, tier: oreList[i].tier, earned, totalMoney: money, variants: rolled};
         }
     }
-    // Default block for each layer
     let defaultOre;
     if (currentLayer == 2) {
         defaultOre = lavaLayerBlock;
@@ -605,7 +788,7 @@ function mineOnce() {
 }
 
 function renderResult(res, minedBy = "") {
-    const span = document.createElement("span");
+    const span = document.createElement("div");
     let classes = [];
     if(res.variants.includes("gold")) classes.push("gold");
     if(res.variants.includes("silver")) classes.push("silver");
@@ -613,29 +796,28 @@ function renderResult(res, minedBy = "") {
     if(res.variants.includes("quantum")) classes.push("quantum");
     if(res.oreName==="StoneBlock") classes.push("layer");
     if(res.oreName==="LavaBlock") classes.push("rarity-lava");
+    
     let variantText = res.variants.length > 0 ? ` (${res.variants.join("+")})` : "";
     let abilityText = minedBy ? ` {mined by ${minedBy}}` : "";
     span.className = classes.join(" ");
-    span.innerHTML = `${res.oreName}${variantText} [${res.tier}] +$${Math.floor(res.earned)}${abilityText}<br>`;
+    span.innerHTML = `> Mined <span class="rarity-${res.tier.toLowerCase()}">${res.oreName}</span>${variantText} [${res.tier}] <span style="color:var(--accent-green)">+$${Math.floor(res.earned)}</span>${abilityText}`;
     output.appendChild(span);
 
     while(output.childNodes.length>200) output.removeChild(output.firstChild);
     output.scrollTop = output.scrollHeight;
 
-    moneyDiv.textContent = `Money: $${Math.floor(res.totalMoney)}`;
-    blocksMinedDiv.textContent = `Blocks Mined: ${blocksMined}`;
+    moneyDiv.textContent = `$${Math.floor(res.totalMoney).toLocaleString()}`;
+    blocksMinedDiv.textContent = blocksMined.toLocaleString();
 
     updateLeaderboard(res.oreName, res.tier);
     updateInventory(res.oreName, res.variants);
     saveData();
 }
 
-// --- Leaderboard ---
 function getOreInfo(name) {
     if (name === "StoneBlock") return {name:"StoneBlock", chance:1, money:5, tier:"Layer"};
     if (name === "Lava") return {name:"Lava", chance:0, money:5, tier:"Lava"};
     if (name === "Basalt") return {name:"Basalt", chance:0, money:5, tier:"Layer"};
-    // Search all ore lists
     let found = ores.find(o => o.name === name)
         || lavaOres.find(o => o.name === name)
         || basaltOres.find(o => o.name === name);
@@ -656,20 +838,19 @@ function updateLeaderboard(oreName, tier) {
 function renderLeaderboard() {
     const list = document.getElementById("leaderboardList");
     list.innerHTML = "";
-    leaderboard.forEach((entry, idx) => {
+    leaderboard.forEach((entry) => {
         if (!entry.name || entry.name === "Lava" || entry.name === "Basalt") return;
         const li = document.createElement("li");
         li.innerHTML = `<span class="rarity-${entry.tier.toLowerCase()}">${entry.name}</span> 
-            <span style="color:#7cc7e5;">[${entry.tier}]</span> 
-            <span style="color:#b0e57c;">Chance: 1/${entry.chance}</span>`;
+            <span style="color:var(--text-muted);">[${entry.tier}]</span> 
+            <span style="color:var(--accent-blue);">1/${entry.chance.toLocaleString()}</span>`;
         list.appendChild(li);
     });
     if (list.childNodes.length === 0) {
-        list.innerHTML = "<li style='color:#555;'>No rare ores mined yet.</li>";
+        list.innerHTML = "<li style='color:var(--text-muted); list-style:none;'>No rare ores mined yet.</li>";
     }
 }
 
-// --- Inventory ---
 function updateInventory(oreName, variantsArr) {
     if (!inventory[oreName]) {
         inventory[oreName] = {count:0, variants:{plain:0,gold:0,silver:0,ionized:0,quantum:0}};
@@ -691,85 +872,69 @@ function renderInventory() {
     tbody.innerHTML = "";
     Object.keys(inventory).sort().forEach(name => {
         const info = getOreInfo(name);
-        if (!info) return; // skip unknown ores
+        if (!info) return;
         const v = inventory[name].variants;
-        const variantStr = `Gold: ${v.gold}, Silver: ${v.silver}, Ionized: ${v.ionized}, Quantum: ${v.quantum}, Plain: ${v.plain}`;
+        const variantStr = `Au:${v.gold} Ag:${v.silver} Ion:${v.ionized} Qnt:${v.quantum}`;
         const tr = document.createElement("tr");
         tr.innerHTML = `<td class="rarity-${info.tier.toLowerCase()}">${name}</td>
-                        <td style="text-align:right;">${inventory[name].count}</td>
-                        <td class="variants">${variantStr}</td>`;
+                        <td style="text-align:right; font-weight:bold;">${inventory[name].count}</td>
+                        <td style="font-size:0.75rem; color:var(--text-muted);">${variantStr}</td>`;
         tbody.appendChild(tr);
     });
     if (Object.keys(inventory).length === 0) {
-        tbody.innerHTML = "<tr><td colspan='3' style='color:#555;'>No ores mined yet.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='3' style='color:var(--text-muted); text-align:center;'>No ores mined yet.</td></tr>";
     }
 }
 
-// --- Mining speed ---
 let miningSpeed = 50;
 function getEffectiveMiningSpeed() {
     return gears.speedCoil ? miningSpeed - 10 : miningSpeed;
 }
 const speedDisplay = document.getElementById("speedDisplay");
 function updateSpeedDisplay() {
-    speedDisplay.textContent = `Mining Speed: ${getEffectiveMiningSpeed()}ms`;
+    speedDisplay.textContent = `${getEffectiveMiningSpeed()}ms`;
 }
 
-// Luck system
 let luck = 1;
 const luckInput = document.getElementById("luckInput");
 const luckDisplay = document.getElementById("luckDisplay");
 
 luckInput.oninput = function() {
     luck = Math.max(1, parseFloat(this.value) || 1);
-    luckDisplay.textContent = `Current Luck: ${luck}x`;
+    luckDisplay.textContent = `${luck}x`;
     updateSpeedDisplay();
 };
 
-// --- Pickaxe system ---
 const pickaxeInfo = document.getElementById("pickaxeInfo");
+const stonePickaxeReq = { stone: 100, copper: 50, money: 500 };
 
-// Requirements for Stone Pickaxe
-const stonePickaxeReq = {
-    stone: 100,
-    copper: 50,
-    money: 500
-};
-
-// --- Stone Ravage ability proc (buffed) ---
 function stoneRavageProc() {
     return Math.random() * 250 < 1;
 }
 
-// --- Pickaxe description ---
-const stonePickaxeDescription = "Your very first pickaxe! The first step on your ore mining journey.";
+const stonePickaxeDescription = "Stone Ravage (1/250) mines 16 ores instantly.";
 
-// --- Update pickaxe info to show description ---
 function updatePickaxeInfo() {
     if (pickaxe === "stone") {
-        pickaxeInfo.textContent = "Stone Pickaxe: Stone Ravage (1/250 chance) mines a 4x4 area (16 ores) per click. " + stonePickaxeDescription;
+        pickaxeInfo.textContent = "Stone Pickaxe Equipped: " + stonePickaxeDescription;
     } else {
-        pickaxeInfo.textContent = "Buy Stone Pickaxe in Blacksmith. " + stonePickaxeDescription;
+        pickaxeInfo.textContent = "Craft the Stone Pickaxe in the Blacksmith for bonuses.";
     }
 }
 
-// --- Notification function ---
 function showNotification(msg) {
     const notification = document.getElementById("notification");
     notification.textContent = msg;
     notification.style.display = "block";
     setTimeout(() => {
         notification.style.display = "none";
-    }, 1500);
+    }, 2000);
 }
 
-// --- Mining logic ---
 document.getElementById("mineBtn").onclick = () => {
     if (pickaxe === "stone" && stoneRavageProc()) {
         for(let i=0;i<16;i++) renderResult(mineOnce(), "Stone Ravage");
-        output.appendChild(document.createElement("hr"));
-        output.appendChild(document.createTextNode("Stone Ravage activated! Mined 16 ores at once.\n"));
-        showNotification("Stone Ravage activated! Mined 16 ores at once.");
+        showNotification("Stone Ravage Activated! (16x)");
     } else {
         renderResult(mineOnce());
     }
@@ -778,19 +943,19 @@ document.getElementById("mineBtn").onclick = () => {
 document.getElementById("autoBtn").onclick = () => {
     autoMining = !autoMining;
     if(autoMining){
-        document.getElementById("autoBtn").textContent = "Stop AutoMine";
+        document.getElementById("autoBtn").textContent = "Stop Auto";
+        document.getElementById("autoBtn").style.background = "var(--accent-red)";
         autoInterval = setInterval(()=>{
             if (pickaxe === "stone" && stoneRavageProc()) {
                 for(let i=0;i<16;i++) renderResult(mineOnce(), "Stone Ravage");
-                output.appendChild(document.createElement("hr"));
-                output.appendChild(document.createTextNode("Stone Ravage activated! Mined 16 ores at once.\n"));
-                showNotification("Stone Ravage activated! Mined 16 ores at once.");
+                showNotification("Stone Ravage Activated! (16x)");
             } else {
                 renderResult(mineOnce());
             }
         }, getEffectiveMiningSpeed());
     } else {
-        document.getElementById("autoBtn").textContent = "Start AutoMine";
+        document.getElementById("autoBtn").textContent = "Auto Mine";
+        document.getElementById("autoBtn").style.background = "var(--accent-gold)";
         clearInterval(autoInterval);
         autoInterval=null;
     }
@@ -801,19 +966,13 @@ document.getElementById("clearBtn").onclick = () => {
     output.innerHTML = "";
 };
 
-// --- Inventory tab toggle ---
 const inventoryToggle = document.getElementById("inventoryToggle");
 const inventoryPanel = document.getElementById("inventoryPanel");
 const closeInventory = document.getElementById("closeInventory");
 
-inventoryToggle.onclick = () => {
-    inventoryPanel.style.display = "block";
-};
-closeInventory.onclick = () => {
-    inventoryPanel.style.display = "none";
-};
+inventoryToggle.onclick = () => { inventoryPanel.style.display = "block"; };
+closeInventory.onclick = () => { inventoryPanel.style.display = "none"; };
 
-// --- Blacksmith tab toggle ---
 const blacksmithToggle = document.getElementById("blacksmithToggle");
 const blacksmithPanel = document.getElementById("blacksmithPanel");
 const closeBlacksmith = document.getElementById("closeBlacksmith");
@@ -824,9 +983,7 @@ blacksmithToggle.onclick = () => {
     renderBlacksmith();
     blacksmithPanel.style.display = "block";
 };
-closeBlacksmith.onclick = () => {
-    blacksmithPanel.style.display = "none";
-};
+closeBlacksmith.onclick = () => { blacksmithPanel.style.display = "none"; };
 
 function renderBlacksmith() {
     const stoneOwned = inventory["Stone"]?.count || 0;
@@ -834,7 +991,7 @@ function renderBlacksmith() {
     const moneyOwned = money;
     document.getElementById("stoneOwned").textContent = stoneOwned;
     document.getElementById("copperOwned").textContent = copperOwned;
-    document.getElementById("moneyOwned").textContent = moneyOwned;
+    document.getElementById("moneyOwned").textContent = `$${Math.floor(moneyOwned)}`;
 
     const stonePercent = Math.min(100, Math.floor((stoneOwned/stonePickaxeReq.stone)*100));
     const copperPercent = Math.min(100, Math.floor((copperOwned/stonePickaxeReq.copper)*100));
@@ -844,15 +1001,17 @@ function renderBlacksmith() {
     document.getElementById("moneyPercent").textContent = moneyPercent + "%";
 
     const overall = Math.floor((stonePercent + copperPercent + moneyPercent)/3);
-    document.getElementById("stonePickaxeProgressLabel").textContent = `Recipe Completion: ${overall}%`;
+    document.getElementById("stonePickaxeProgressLabel").textContent = `Recipe Progress: ${overall}%`;
     document.getElementById("stonePickaxeProgressBar").style.width = overall + "%";
 
     if (pickaxe === "stone") {
-        blacksmithPickaxeInfo.textContent = "Owned! Stone Ravage (1/250 chance) mines a 4x4 area (16 ores) per click. " + stonePickaxeDescription;
+        blacksmithPickaxeInfo.textContent = "Already Crafted! Benefit: " + stonePickaxeDescription;
         buyStonePickaxeBlacksmith.disabled = true;
+        buyStonePickaxeBlacksmith.style.opacity = 0.5;
     } else {
-        blacksmithPickaxeInfo.textContent = "Requires 100 Stone, 50 Copper, $500. " + stonePickaxeDescription;
+        blacksmithPickaxeInfo.textContent = "Requires 100 Stone, 50 Copper, $500.";
         buyStonePickaxeBlacksmith.disabled = false;
+        buyStonePickaxeBlacksmith.style.opacity = 1;
     }
 }
 
@@ -870,17 +1029,16 @@ buyStonePickaxeBlacksmith.onclick = function() {
         inventory["Copper"].count -= stonePickaxeReq.copper;
         pickaxe = "stone";
         updatePickaxeInfo();
-        moneyDiv.textContent = `Money: $${Math.floor(money)}`;
+        moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
         renderInventory();
         renderBlacksmith();
         saveData();
-        showNotification("You bought the Stone Pickaxe!");
+        showNotification("Crafted Stone Pickaxe!");
     } else {
-        showNotification("Not enough resources to buy Stone Pickaxe!");
+        showNotification("Missing required materials!");
     }
 };
 
-// --- Gears panel logic ---
 const gearsToggle = document.getElementById("gearsToggle");
 const gearsPanel = document.getElementById("gearsPanel");
 const closeGears = document.getElementById("closeGears");
@@ -891,17 +1049,17 @@ gearsToggle.onclick = () => {
     renderGears();
     gearsPanel.style.display = "block";
 };
-closeGears.onclick = () => {
-    gearsPanel.style.display = "none";
-};
+closeGears.onclick = () => { gearsPanel.style.display = "none"; };
 
 function renderGears() {
     if (gears.speedCoil) {
-        speedCoilStatus.textContent = "Crafted! (Active)";
+        speedCoilStatus.textContent = "Status: Crafted & Active";
         craftSpeedCoil.disabled = true;
+        craftSpeedCoil.style.opacity = 0.5;
     } else {
-        speedCoilStatus.textContent = "Not crafted.";
+        speedCoilStatus.textContent = "Status: Not Owned";
         craftSpeedCoil.disabled = false;
+        craftSpeedCoil.style.opacity = 1;
     }
     updateSpeedDisplay();
 }
@@ -911,25 +1069,25 @@ craftSpeedCoil.onclick = function() {
         money -= 1000;
         gears.speedCoil = true;
         renderGears();
-        moneyDiv.textContent = `Money: $${Math.floor(money)}`;
+        moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
         saveData();
-        showNotification("Crafted Speed Coil! Mining speed reduced by 10ms.");
+        showNotification("Crafted Speed Coil!");
     } else if (gears.speedCoil) {
-        showNotification("You already have Speed Coil!");
+        showNotification("Already crafted!");
     } else {
-        showNotification("Not enough money to craft Speed Coil!");
+        showNotification("Not enough money!");
     }
 };
 
-// Initial render
+fillOreDropdown(currentLayer);
 updatePickaxeInfo();
 renderLeaderboard();
 renderInventory();
 renderBlacksmith();
 renderGears();
 updateSpeedDisplay();
-blocksMinedDiv.textContent = `Blocks Mined: ${blocksMined}`;
-moneyDiv.textContent = `Money: $${Math.floor(money)}`;
+blocksMinedDiv.textContent = blocksMined.toLocaleString();
+moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
 </script>
 </body>
 </html>
