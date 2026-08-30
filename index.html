@@ -855,9 +855,14 @@ function rollVariants() {
 
 function triggerQuartzOverload() {
     quartzOverloadActive = true;
-    showNotification("💎 QUARTZ OVERLOAD ACTIVATED! 2x Speed & +2.5x Flat Luck!");
+    showNotification("💎 Quartz Overload Active; 2x Speed & +2.5x Flat Luck!");
     updateSpeedDisplay();
     luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
+
+    if (autoMining) {
+        clearInterval(autoInterval);
+        autoInterval = setInterval(() => handleMine(false), getEffectiveMiningSpeed());
+    }
 
     if (quartzOverloadTimer) clearTimeout(quartzOverloadTimer);
     quartzOverloadTimer = setTimeout(() => {
@@ -865,7 +870,12 @@ function triggerQuartzOverload() {
         showNotification("Quartz Overload ended.");
         updateSpeedDisplay();
         luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
-    }, 10000); // Lasts 10 seconds
+
+        if (autoMining) {
+            clearInterval(autoInterval);
+            autoInterval = setInterval(() => handleMine(false), getEffectiveMiningSpeed());
+        }
+    }, 10000); 
 }
 
 function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
