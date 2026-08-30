@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gracie Abrahms</title>
+<title>Mining Game</title>
 <style>
     :root {
         --bg-color: #0d0f12;
@@ -78,6 +78,17 @@
     }
 
     .inventory-header h2 { font-size: 1.125rem; }
+
+    .inventory-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .inventory-controls input, .inventory-controls select {
+        width: 100%;
+    }
 
     .inventory-scroll {
         overflow-y: auto;
@@ -167,7 +178,7 @@
         font-size: 0.875rem;
     }
 
-    input[type="number"], select {
+    input[type="text"], input[type="number"], select {
         background: var(--btn-bg);
         border: 1px solid var(--card-border);
         color: var(--text-main);
@@ -203,7 +214,7 @@
         border: 1px solid var(--card-border);
         border-radius: 10px;
         padding: 14px;
-        margin-bottom: 20px;
+        margin-top: 16px;
     }
 
     #leaderboardBox b {
@@ -238,6 +249,23 @@
     #autoBtn { background: var(--accent-gold); color: #000; }
     #autoBtn:hover { filter: brightness(1.1); transform: translateY(-1px); }
     #clearBtn { background: var(--btn-bg); color: var(--text-muted); border: 1px solid var(--card-border); }
+
+    .reset-btn {
+        width: 100%;
+        margin-top: 16px;
+        background: rgba(248, 113, 113, 0.1);
+        color: var(--accent-red);
+        border: 1px solid var(--accent-red);
+        padding: 8px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .reset-btn:hover {
+        background: var(--accent-red);
+        color: #000;
+    }
 
     #output {
         background: #090a0f;
@@ -340,6 +368,8 @@
     .rarity-enigmatic { color: #f43f5e; }
     .rarity-unfathomable { color: #6366f1; }
     .rarity-cosmic { color: #38bdf8; font-weight: bold; }
+    .rarity-divine { color: #facc15; font-weight: bold; }
+    .rarity-infinite { color: #ec4899; font-weight: bold; }
     .rarity-layer { color: var(--text-muted); }
     .rarity-lava { color: var(--accent-red); }
 </style>
@@ -370,7 +400,7 @@
         </div>
 
         <div class="header">
-            <h1>⛏️ Low-Stakes Mining Simulator</h1>
+            <h1>⛏️ Mining Simulator</h1>
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">Balance</div>
@@ -414,11 +444,6 @@
         
         <div id="oreInfoBox"></div>
 
-        <div id="leaderboardBox">
-            <b>Rarest Ore Leaderboard</b>
-            <ol id="leaderboardList"></ol>
-        </div>
-
         <div class="action-row">
             <button class="action-btn" id="mineBtn">Mine 1x</button>
             <button class="action-btn" id="autoBtn">Auto Mine</button>
@@ -426,6 +451,8 @@
         </div>
 
         <div id="output"></div>
+        
+        <button class="reset-btn" id="resetDataBtn">⚠️ Reset All Data</button>
         <div id="notification">Notification message</div>
     </div>
 
@@ -434,14 +461,28 @@
             <h2>📦 Inventory</h2>
             <button class="close-btn" id="expandAllVariantsBtn" style="font-size:0.75rem;">Toggle Variants</button>
         </div>
+        
+        <div class="inventory-controls">
+            <input type="text" id="inventorySearch" placeholder="Search ores...">
+            <select id="inventorySort">
+                <option value="name">Sort by Name</option>
+                <option value="count">Sort by Quantity (High -> Low)</option>
+                <option value="rarity">Sort by Rarity (High -> Low)</option>
+            </select>
+        </div>
+
         <div class="inventory-scroll" id="inventoryList"></div>
+
+        <div id="leaderboardBox">
+            <b>Rarest Ore Leaderboard</b>
+            <ol id="leaderboardList"></ol>
+        </div>
     </div>
 </div>
 
 <script>
 let currentLayer = 1;
 
-// Filtered out ores above 1,000,000,000 rarity
 const ores = [
     {name:"Stone", chance:0, money:5, tier:"Layer"},
     {name:"Copper", chance:40, money:10, tier:"Common"},
@@ -469,7 +510,9 @@ const ores = [
     {name:"Gradience", chance:61345755, money:50000, tier:"Enigmatic"},
     {name:"Vaporwave Crystal", chance:90000000, money:75000, tier:"Enigmatic"},
     {name:"Endozivite", chance:247010000, money:100000, tier:"Unfathomable"},
-    {name:"Hyperion Star", chance:750000000, money:350000, tier:"Cosmic"}
+    {name:"Hyperion Star", chance:750000000, money:350000, tier:"Cosmic"},
+    {name:"Chronos Shard", chance:2500000000, money:1200000, tier:"Divine"},
+    {name:"Omni Core", chance:10000000000, money:5000000, tier:"Infinite"}
 ];
 
 const lavaOres = [
@@ -521,7 +564,9 @@ const lavaOres = [
     {name:"Cindralith", chance:95000000, money:100000, tier:"Enigmatic"},
     {name:"Phlegron", chance:200000000, money:150000, tier:"Unfathomable"},
     {name:"Erebrium", chance:700000000, money:300000, tier:"Unfathomable"},
-    {name:"Pyroxis", chance:800000000, money:500000, tier:"Cosmic"}
+    {name:"Pyroxis", chance:800000000, money:500000, tier:"Cosmic"},
+    {name:"Solar Flare", chance:3000000000, money:1800000, tier:"Divine"},
+    {name:"Supernova", chance:10000000000, money:6000000, tier:"Infinite"}
 ];
 
 const basaltOres = [
@@ -551,7 +596,10 @@ const basaltOres = [
     {name:"Glacielle", chance:31400000, money:35000, tier:"Transcendent"},
     {name:"Cybernetium", chance:52400000, money:50000, tier:"Enigmatic"},
     {name:"Bulbalescense", chance:81818181, money:75000, tier:"Enigmatic"},
-    {name:"Inclemetite", chance:386500000, money:100000, tier:"Unfathomable"}
+    {name:"Inclemetite", chance:386500000, money:100000, tier:"Unfathomable"},
+    {name:"Void Crystal", chance:1500000000, money:800000, tier:"Cosmic"},
+    {name:"Abyssal Heart", chance:4500000000, money:2500000, tier:"Divine"},
+    {name:"Singularity", chance:10000000000, money:8000000, tier:"Infinite"}
 ];
 
 const crystalOres = [
@@ -566,7 +614,9 @@ const crystalOres = [
     {name:"Radiance Crystal", chance:950000, money:25000, tier:"Mythic"},
     {name:"Celestial Diamond", chance:5000000, money:80000, tier:"Exotic"},
     {name:"Astral Prism", chance:35000000, money:250000, tier:"Exquisite"},
-    {name:"Supernova Gem", chance:180000000, money:1000000, tier:"Transcendent"}
+    {name:"Supernova Gem", chance:180000000, money:1000000, tier:"Transcendent"},
+    {name:"Shard of Light", chance:1200000000, money:5000000, tier:"Cosmic"},
+    {name:"Eternal Catalyst", chance:8000000000, money:20000000, tier:"Divine"}
 ];
 
 const quantumOres = [
@@ -580,7 +630,9 @@ const quantumOres = [
     {name:"Entropy Cluster", chance:2100000, money:180000, tier:"Mythic"},
     {name:"Cosmic Essence", chance:15000000, money:600000, tier:"Exotic"},
     {name:"Event Horizon", chance:90000000, money:2500000, tier:"Exquisite"},
-    {name:"Dimensional Anchor", chance:500000000, money:10000000, tier:"Transcendent"}
+    {name:"Dimensional Anchor", chance:500000000, money:10000000, tier:"Transcendent"},
+    {name:"Timeless Relic", chance:3000000000, money:40000000, tier:"Cosmic"},
+    {name:"Omnipresent Spark", chance:10000000000, money:150000000, tier:"Infinite"}
 ];
 
 const variants = [
@@ -590,7 +642,6 @@ const variants = [
     {name:"quantum", chance:40, multiplier:3}
 ];
 
-// Capped pickaxes at T2
 const pickaxeDefinitions = [
     { 
         id: "t1_flint", 
@@ -613,16 +664,135 @@ const pickaxeDefinitions = [
             { type: "passive_step", step: 5, extraBlocks: 2, name: "Iron Pulse" },
             { type: "active_burst", proc: 1/120, count: 25, name: "Vein Shatter" }
         ]
+    },
+    { 
+        id: "t3_cobalt", 
+        name: "T3: Cobalt Pulse Drill", 
+        req: { Cobalt: 15, Agate: 50, money: 10000 }, 
+        desc: "[Passive] Resonant Frequency: Every 4th block mines 3x ores. [Active] Sonic Boom (1/100): Mines 50 ores instantly.", 
+        luckMod: 1.25,
+        abilities: [
+            { type: "passive_step", step: 4, extraBlocks: 2, name: "Resonant Frequency" },
+            { type: "active_burst", proc: 1/100, count: 50, name: "Sonic Boom" }
+        ]
+    },
+    { 
+        id: "t4_amber", 
+        name: "T4: Amber Razor", 
+        req: { Amber: 20, Orpiment: 5, money: 50000 }, 
+        desc: "[Passive] Preserved Luck: +0.25x Base Luck. [Active] Resin Slice (1/90): Mines 75 ores. [Active] Amber Flare (1/350): Mines 150 ores.", 
+        luckMod: 1.25,
+        abilities: [
+            { type: "passive_luck", bonusLuck: 0.25, name: "Preserved Luck" },
+            { type: "active_burst", proc: 1/90, count: 75, name: "Resin Slice" },
+            { type: "active_burst", proc: 1/350, count: 150, name: "Amber Flare" }
+        ]
+    },
+    { 
+        id: "t5_petrified", 
+        name: "T5: Fossil Demolisher", 
+        req: { "Petrified Wood": 5, Phlogopite: 10, money: 250000 }, 
+        desc: "[Passive] Deep Root: Every 2nd block mines 2x. [Active] Ancient Cataclysm (1/80): Mines 120 ores. [Active] Tremor (1/300): Mines 250 ores.", 
+        luckMod: 1.5,
+        abilities: [
+            { type: "passive_step", step: 2, extraBlocks: 1, name: "Deep Root" },
+            { type: "active_burst", proc: 1/80, count: 120, name: "Ancient Cataclysm" },
+            { type: "active_burst", proc: 1/300, count: 250, name: "Tremor" }
+        ]
+    },
+    { 
+        id: "t6_elusium", 
+        name: "T6: Elusium Vaporizer", 
+        req: { Elusium: 3, Antiquite: 2, money: 1000000 }, 
+        desc: "[Passive] Vapor Stream: Every 3rd block mines 4x. [Passive] Quantum Resonance: +0.5x Luck. [Active] Sublimation Burst (1/70): Mines 200 ores.", 
+        luckMod: 1.0,
+        abilities: [
+            { type: "passive_step", step: 3, extraBlocks: 3, name: "Vapor Stream" },
+            { type: "passive_luck", bonusLuck: 0.5, name: "Quantum Resonance" },
+            { type: "active_burst", proc: 1/70, count: 200, name: "Sublimation Burst" }
+        ]
+    },
+    { 
+        id: "t7_unobtainium", 
+        name: "T7: Unobtainium Excavator", 
+        req: { Unobtainium: 2, Aesthetium: 2, money: 10000000 }, 
+        desc: "[Passive] Singularity Pull: Every block mines 2x. [Passive] Core Overclock: +1.0x Luck. [Active] Void Blast (1/60): Mines 400 ores.", 
+        luckMod: 1.0,
+        abilities: [
+            { type: "passive_step", step: 1, extraBlocks: 1, name: "Singularity Pull" },
+            { type: "passive_luck", bonusLuck: 1.0, name: "Core Overclock" },
+            { type: "active_burst", proc: 1/60, count: 400, name: "Void Blast" }
+        ]
+    },
+    { 
+        id: "t8_penumbrosia", 
+        name: "T8: Penumbra Harvester", 
+        req: { Penumbrosia: 2, Aegistone: 1, money: 100000000 }, 
+        desc: "[Passive] Eclipse: Every 5th block mines 10x. [Passive] Dark Matter: +1.5x Luck. [Active] Shadow Harvest (1/50): Mines 750 ores. [Active] Supernova (1/500): Mines 2,000 ores.", 
+        luckMod: 1.0,
+        abilities: [
+            { type: "passive_step", step: 5, extraBlocks: 9, name: "Eclipse" },
+            { type: "passive_luck", bonusLuck: 1.5, name: "Dark Matter" },
+            { type: "active_burst", proc: 1/50, count: 750, name: "Shadow Harvest" },
+            { type: "active_burst", proc: 1/500, count: 2000, name: "Supernova Strike" }
+        ]
+    },
+    { 
+        id: "t9_endozivite", 
+        name: "T9: Endozivite World-Crusher", 
+        req: { Endozivite: 2, Pasivium: 1, money: 1000000000 }, 
+        desc: "[Passive] Tectonic Shift: Every 2nd block mines 5x. [Passive] Hyper Luck: +3.0x Luck. [Active] Planetary Shatter (1/30): Mines 1,500 ores. [Active] Core Collapse (1/250): Mines 5,000 ores.", 
+        luckMod: 1.0,
+        abilities: [
+            { type: "passive_step", step: 2, extraBlocks: 4, name: "Tectonic Shift" },
+            { type: "passive_luck", bonusLuck: 3.0, name: "Hyper Luck" },
+            { type: "active_burst", proc: 1/30, count: 1500, name: "Planetary Shatter" },
+            { type: "active_burst", proc: 1/250, count: 5000, name: "Core Collapse" }
+        ]
+    },
+    { 
+        id: "t10_infinity", 
+        name: "T10: Infinity Matrix", 
+        req: { "Hyperion Star": 1, "Chronos Shard": 1, money: 25000000000 }, 
+        desc: "[Passive] Infinite Duplication: Every block mines 10x. [Passive] Transcendent Aura: +5.0x Luck. [Active] Matrix Eradication (1/15): Mines 3,000 ores. [Active] Big Bang (1/100): Mines 15,000 ores.", 
+        luckMod: 1.0,
+        abilities: [
+            { type: "passive_step", step: 1, extraBlocks: 9, name: "Infinite Duplication" },
+            { type: "passive_luck", bonusLuck: 5.0, name: "Transcendent Aura" },
+            { type: "active_burst", proc: 1/15, count: 3000, name: "Matrix Eradication" },
+            { type: "active_burst", proc: 1/100, count: 15000, name: "Big Bang" }
+        ]
     }
 ];
 
-// Kept only the Speed Coil
 const gearsDefinitions = [
-    { id: "speedCoil", name: "Speed Coil", cost: 1000, req: { Copper: 20 }, desc: "Reduces mining interval by 10ms." }
+    { id: "speedCoil", name: "Speed Coil", cost: 1000, req: { Copper: 20 }, desc: "Reduces mining interval by 10ms." },
+    { id: "luckMagnet", name: "Luck Magnet", cost: 25000, req: { Quartz: 100, Iron: 100 }, desc: "Passively adds +0.5x to your Luck Multiplier." },
+    { id: "autoSmelter", name: "Auto Smelter", cost: 250000, req: { Coal: 200, Amber: 10 }, desc: "Gives a 15% bonus value on all mined ores." },
+    { id: "deepSeeker", name: "Deep Seeker Module", cost: 800000, req: { Basaltium: 5, Ignicite: 15 }, desc: "Passively increases rare ore luck by +0.75x in Lava and Basalt layers." },
+    { id: "quantumAmplifier", name: "Quantum Amplifier", cost: 5000000, req: { Cobalt: 50, Chrysoberyl: 10 }, desc: "Doubles the frequency of variant spawns." },
+    { id: "prismLens", name: "Prism Refractor", cost: 20000000, req: { Amethyst: 100, Prismite: 25, Fluorite: 5 }, desc: "Grants a 5% chance to double all drops in Layer 4 (Crystal Caverns)." },
+    { id: "overclockEngine", name: "Overclock Engine", cost: 100000000, req: { Bluesteel: 20, Freon: 2 }, desc: "Reduces mining interval by an additional 15ms." },
+    { id: "chronoCapacitor", name: "Chrono Capacitor", cost: 300000000, req: { "Chrono Dust": 30, "Tachyon Gem": 2, "Cryoclase": 10 }, desc: "Passively increases mining speed and yields +1.0x Luck." },
+    { id: "midasTouch", name: "Midas Artifact", cost: 1000000000, req: { Gold: 100, Pasivium: 1 }, desc: "Increases variant multiplier bonus by +1.0x." },
+    { id: "voidDistorter", name: "Void Distortion Field", cost: 3500000000, req: { "Dark Plasma": 150, "Singularity Core": 3, "Elysian": 1 }, desc: "Converts 1% of layer-filler stone/matter drops into rare ores." },
+    { id: "hyperSifter", name: "Hyper Sifter", cost: 12000000000, req: { "Celestial Diamond": 2, "Ethereal Node": 15, "Volcryst": 10 }, desc: "Increases base earnings from all blocks by 50%." },
+    { id: "omegaStabilizer", name: "Omega Stabilizer", cost: 50000000000, req: { "Dimensional Anchor": 1, "Radiance Crystal": 5, "Unobtainium": 5 }, desc: "Ultimate Module: Grants +2.5x Luck across all layers." }
 ];
 
 let gears = {
-    speedCoil: false
+    speedCoil: false,
+    luckMagnet: false,
+    autoSmelter: false,
+    deepSeeker: false,
+    quantumAmplifier: false,
+    prismLens: false,
+    overclockEngine: false,
+    chronoCapacitor: false,
+    midasTouch: false,
+    voidDistorter: false,
+    hyperSifter: false,
+    omegaStabilizer: false
 };
 
 let variantToggles = {};
@@ -646,6 +816,24 @@ function loadData() {
     blocksMined = Number(localStorage.getItem("mining_blocksMined")) || 0;
     const g = localStorage.getItem("mining_gears");
     if (g) gears = Object.assign(gears, JSON.parse(g));
+}
+
+function resetData() {
+    if (confirm("Are you sure you want to reset all game data? This cannot be undone!")) {
+        localStorage.clear();
+        leaderboard = [];
+        inventory = {};
+        money = 0;
+        pickaxe = "none";
+        blocksMined = 0;
+        gears = {
+            speedCoil: false, luckMagnet: false, autoSmelter: false, deepSeeker: false,
+            quantumAmplifier: false, prismLens: false, overclockEngine: false,
+            chronoCapacitor: false, midasTouch: false, voidDistorter: false,
+            hyperSifter: false, omegaStabilizer: false
+        };
+        location.reload();
+    }
 }
 
 let leaderboard = [];
@@ -721,16 +909,19 @@ document.getElementById("layerSelect").onchange = function() {
 function rollVariants() {
     let rolled = [];
     let mult = 1;
+    let modChance = gears.quantumAmplifier ? 2 : 1;
+    let extraMult = gears.midasTouch ? 1.0 : 0.0;
 
     variants.forEach(v => {
-        if(Math.random() * v.chance < 1){
+        if(Math.random() * (v.chance / modChance) < 1){
             rolled.push(v.name);
-            mult *= v.multiplier;
+            mult *= (v.multiplier + extraMult);
         }
     });
     return {rolled, mult};
 }
 
+// Bulk Mining Engine for High-Performance Multi-Block Drops
 function bulkMine(count) {
     let oreList;
     if (currentLayer == 2) oreList = [lavaLayerBlock, ...lavaOres];
@@ -754,6 +945,13 @@ function bulkMine(count) {
                 break;
             }
         }
+        
+        if (!selectedOre && gears.voidDistorter && Math.random() < 0.01) {
+            let rareCandidates = oreList.filter(o => o.chance > 0);
+            if (rareCandidates.length > 0) {
+                selectedOre = rareCandidates[Math.floor(Math.random() * rareCandidates.length)];
+            }
+        }
 
         if (!selectedOre) {
             selectedOre = oreList.find(o => o.chance === 0) || oreList[0];
@@ -761,28 +959,36 @@ function bulkMine(count) {
 
         const {rolled, mult} = rollVariants();
         let earned = selectedOre.money * mult;
+        if (gears.autoSmelter) earned *= 1.15;
+        if (gears.hyperSifter) earned *= 1.5;
 
-        totalEarned += earned;
+        let dropMultiplier = 1;
+        if (currentLayer === 4 && gears.prismLens && Math.random() < 0.05) {
+            dropMultiplier = 2;
+        }
+
+        totalEarned += earned * dropMultiplier;
 
         if (!summary[selectedOre.name]) {
             summary[selectedOre.name] = { count: 0, tier: selectedOre.tier, info: selectedOre };
         }
-        summary[selectedOre.name].count += 1;
+        summary[selectedOre.name].count += dropMultiplier;
 
         if (!rarestRolled || selectedOre.chance > rarestRolled.chance) {
             rarestRolled = selectedOre;
         }
 
+        // Inventory aggregate
         if (!inventory[selectedOre.name]) {
             inventory[selectedOre.name] = {count:0, variants:{plain:0,gold:0,silver:0,ionized:0,quantum:0}};
         }
-        inventory[selectedOre.name].count += 1;
+        inventory[selectedOre.name].count += dropMultiplier;
         if (rolled.length > 0) {
-            rolled.forEach(v => { inventory[selectedOre.name].variants[v] += 1; });
+            rolled.forEach(v => { inventory[selectedOre.name].variants[v] += dropMultiplier; });
         } else {
-            inventory[selectedOre.name].variants.plain += 1;
+            inventory[selectedOre.name].variants.plain += dropMultiplier;
         }
-        updateLeaderboard(selectedOre.name, selectedOre.tier);
+        updateLeaderboard(selectedOre.name, mult);
     }
 
     money += totalEarned;
@@ -817,12 +1023,23 @@ function getOreInfo(name) {
     return ores.find(o => o.name === name) || lavaOres.find(o => o.name === name) || basaltOres.find(o => o.name === name) || crystalOres.find(o => o.name === name) || quantumOres.find(o => o.name === name);
 }
 
-function updateLeaderboard(oreName, tier) {
+function updateLeaderboard(oreName, variantMultiplier = 1) {
     const info = getOreInfo(oreName);
     if (!info || info.name === "StoneBlock" || info.name === "Lava" || info.name === "Basalt" || info.name === "Crystal Shard" || info.name === "Void Matter") return;
-    if (leaderboard.some(e => e.name === oreName)) return;
-    leaderboard.push({name: oreName, tier: info.tier, chance: info.chance, time: Date.now()});
-    leaderboard.sort((a, b) => b.chance - a.chance || a.time - b.time);
+    
+    const adjustedChance = info.chance * variantMultiplier;
+
+    const existingIdx = leaderboard.findIndex(e => e.name === oreName);
+    if (existingIdx !== -1) {
+        if (adjustedChance > leaderboard[existingIdx].adjustedChance) {
+            leaderboard[existingIdx].adjustedChance = adjustedChance;
+            leaderboard[existingIdx].variantMult = variantMultiplier;
+        }
+    } else {
+        leaderboard.push({name: oreName, tier: info.tier, chance: info.chance, adjustedChance: adjustedChance, variantMult: variantMultiplier, time: Date.now()});
+    }
+
+    leaderboard.sort((a, b) => b.adjustedChance - a.adjustedChance || a.time - b.time);
     if (leaderboard.length > 10) leaderboard.length = 10;
     renderLeaderboard();
 }
@@ -832,9 +1049,10 @@ function renderLeaderboard() {
     list.innerHTML = "";
     leaderboard.forEach((entry) => {
         const li = document.createElement("li");
-        li.innerHTML = `<span class="rarity-${entry.tier.toLowerCase()}">${entry.name}</span> 
+        let extraTag = entry.variantMult > 1 ? ` <span style="color:var(--accent-gold); font-size: 0.75rem;">(${entry.variantMult}x Var)</span>` : '';
+        li.innerHTML = `<span class="rarity-${entry.tier.toLowerCase()}">${entry.name}</span>${extraTag} 
             <span style="color:var(--text-muted);">[${entry.tier}]</span> 
-            <span style="color:var(--accent-blue);">1/${entry.chance.toLocaleString()}</span>`;
+            <span style="color:var(--accent-blue);">1/${Math.floor(entry.adjustedChance).toLocaleString()}</span>`;
         list.appendChild(li);
     });
     if (list.childNodes.length === 0) {
@@ -856,13 +1074,32 @@ document.getElementById("expandAllVariantsBtn").onclick = () => {
     renderInventory();
 };
 
+document.getElementById("inventorySearch").oninput = renderInventory;
+document.getElementById("inventorySort").onchange = renderInventory;
+
 function renderInventory() {
     const container = document.getElementById("inventoryList");
     container.innerHTML = "";
 
-    const keys = Object.keys(inventory).sort();
+    const filterText = document.getElementById("inventorySearch").value.toLowerCase();
+    const sortBy = document.getElementById("inventorySort").value;
+
+    let keys = Object.keys(inventory).filter(name => name.toLowerCase().includes(filterText));
+
+    if (sortBy === "name") {
+        keys.sort();
+    } else if (sortBy === "count") {
+        keys.sort((a, b) => inventory[b].count - inventory[a].count);
+    } else if (sortBy === "rarity") {
+        keys.sort((a, b) => {
+            const infoA = getOreInfo(a);
+            const infoB = getOreInfo(b);
+            return (infoB ? infoB.chance : 0) - (infoA ? infoA.chance : 0);
+        });
+    }
+
     if (keys.length === 0) {
-        container.innerHTML = "<div style='color:var(--text-muted); font-size:0.875rem; text-align:center; padding: 20px 0;'>No ores collected.</div>";
+        container.innerHTML = "<div style='color:var(--text-muted); font-size:0.875rem; text-align:center; padding: 20px 0;'>No ores found.</div>";
         return;
     }
 
@@ -901,11 +1138,18 @@ let baseMiningSpeed = 50;
 function getEffectiveMiningSpeed() {
     let speed = baseMiningSpeed;
     if (gears.speedCoil) speed -= 10;
+    if (gears.overclockEngine) speed -= 15;
+    if (gears.chronoCapacitor) speed -= 5;
     return Math.max(5, speed);
 }
 
 function getEffectiveLuck() {
     let l = luck;
+    if (gears.luckMagnet) l += 0.5;
+    if (gears.deepSeeker && (currentLayer === 2 || currentLayer === 3)) l += 0.75;
+    if (gears.chronoCapacitor) l += 1.0;
+    if (gears.omegaStabilizer) l += 2.5;
+
     let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
     if (pDef) {
         pDef.abilities.forEach(ab => {
@@ -952,6 +1196,7 @@ function handleMine() {
     let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
     let totalBlocksToMine = 1;
 
+    // Process Pickaxe Passives
     if (pDef) {
         pDef.abilities.forEach(ab => {
             if (ab.type === "passive_step") {
@@ -962,9 +1207,11 @@ function handleMine() {
         });
     }
 
+    // Process Base Mining Action
     let result = bulkMine(totalBlocksToMine);
     renderBulkResult(result, pDef ? pDef.name : "Hand Pick");
 
+    // Process Active Ability Triggers
     if (pDef) {
         pDef.abilities.forEach(ab => {
             if (ab.type === "active_burst") {
@@ -979,6 +1226,7 @@ function handleMine() {
 }
 
 document.getElementById("mineBtn").onclick = handleMine;
+document.getElementById("resetDataBtn").onclick = resetData;
 
 document.getElementById("autoBtn").onclick = () => {
     autoMining = !autoMining;
@@ -997,6 +1245,7 @@ document.getElementById("autoBtn").onclick = () => {
 
 document.getElementById("clearBtn").onclick = () => { output.innerHTML = ""; };
 
+// Render Blacksmith Pickaxe UI
 const blacksmithToggle = document.getElementById("blacksmithToggle");
 const blacksmithPanel = document.getElementById("blacksmithPanel");
 const closeBlacksmith = document.getElementById("closeBlacksmith");
@@ -1073,6 +1322,7 @@ function craftPickaxe(id) {
     showNotification(`Crafted ${p.name}!`);
 }
 
+// Render Gears Workbench UI
 const gearsToggle = document.getElementById("gearsToggle");
 const gearsPanel = document.getElementById("gearsPanel");
 const closeGears = document.getElementById("closeGears");
