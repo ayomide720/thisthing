@@ -317,37 +317,35 @@
     .inv-variants-panel { display: none; background: rgba(0,0,0,0.25); border-radius: 6px; padding: 8px; margin-top: 6px; font-size: 0.75rem; }
     .variant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 
-#notification-container {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column-reverse; /* Newest notifications stack upwards */
-    gap: 8px;
-    z-index: 999;
-    align-items: center;
-    pointer-events: none; /* Let clicks pass through */
-}
+    #notification-container {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 8px;
+        z-index: 999;
+        align-items: center;
+        pointer-events: none;
+    }
 
-/* Individual notification bubble style */
-.notification-bubble {
-    background: var(--btn-hover);
-    color: var(--text-main);
-    border: 1px solid var(--accent-blue);
-    padding: 10px 20px;
-    border-radius: 30px;
-    font-size: 0.875rem;
-    opacity: 1;
-    transition: opacity 0.5s ease, transform 0.5s ease;
-    pointer-events: auto;
-}
+    .notification-bubble {
+        background: var(--btn-hover);
+        color: var(--text-main);
+        border: 1px solid var(--accent-blue);
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 0.875rem;
+        opacity: 1;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        pointer-events: auto;
+    }
 
-/* Class applied just before removal to trigger the fade-out */
-.notification-bubble.fade-out {
-    opacity: 0;
-    transform: translateY(10px);
-}
+    .notification-bubble.fade-out {
+        opacity: 0;
+        transform: translateY(10px);
+    }
 
     .craft-card {
         background: rgba(0,0,0,0.2);
@@ -470,7 +468,7 @@
         <div id="output"></div>
         
         <button class="reset-btn" id="resetDataBtn">⚠️ Reset All Data</button>
-        <div id="notification">Notification message</div>
+        <div id="notification-container"></div>
     </div>
 
     <div class="inventory-sidebar">
@@ -710,35 +708,9 @@ const gearsDefinitions = [
     { id: "flashGrenade", name: "Flash Grenade", cost: 2500, req: { Quartz: 50 }, desc: "Every 2nd block mined has a 1/5 chance to activate a Flash Bomb, mining 30 ores with 0.5x luck, but duplicating ores with a rarity below 100. Does not duplicate layer blocks." }
 ];
 
-    let gearSlots = 3; // Starting cap
+let gearSlots = 3;
 const maxGearLimit = 12;
 
-// Add this to your save/load functions
-function saveGameData() {
-    // ... existing saves ...
-    localStorage.setItem("mining_gearSlots", gearSlots);
-}
-
-function loadGameData() {
-    // ... existing saves ...
-    const savedSlots = localStorage.getItem("mining_gearSlots");
-    if (savedSlots) gearSlots = Number(savedSlots);
-}
-
-let gearSlots = 3; // Starting cap
-const maxGearLimit = 12;
-
-// Add this to your save/load functions
-function saveGameData() {
-    // ... existing saves ...
-    localStorage.setItem("mining_gearSlots", gearSlots);
-}
-
-function loadGameData() {
-    // ... existing saves ...
-    const savedSlots = localStorage.getItem("mining_gearSlots");
-    if (savedSlots) gearSlots = Number(savedSlots);
-}
 let gears = {
     speedCoil: false,
     flashGrenade: false
@@ -762,6 +734,7 @@ function saveData() {
     localStorage.setItem("mining_pickaxe", pickaxe);
     localStorage.setItem("mining_blocksMined", blocksMined);
     localStorage.setItem("mining_gears", JSON.stringify(gears));
+    localStorage.setItem("mining_gearSlots", gearSlots);
 }
 
 function loadData() {
@@ -774,6 +747,8 @@ function loadData() {
     blocksMined = Number(localStorage.getItem("mining_blocksMined")) || 0;
     const g = localStorage.getItem("mining_gears");
     if (g) gears = Object.assign(gears, JSON.parse(g));
+    const savedSlots = localStorage.getItem("mining_gearSlots");
+    if (savedSlots) gearSlots = Number(savedSlots);
     
     if (!pickaxeDefinitions.some(p => p.id === pickaxe)) {
         pickaxe = "none";
@@ -788,6 +763,7 @@ function resetData() {
         money = 0;
         pickaxe = "none";
         blocksMined = 0;
+        gearSlots = 3;
         gears = {
             speedCoil: false,
             flashGrenade: false
@@ -952,7 +928,6 @@ function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
             selectedOre = oreList.find(o => o.chance === 0) || oreList[0];
         }
 
-        // Quartz Crusher mechanics integrated inside the loop
         if (pickaxe === "t2_quartz") {
             if (selectedOre.name === "Quartz") {
                 crystalResonanceCharges = Math.min(10, crystalResonanceCharges + 1);
@@ -1155,7 +1130,7 @@ let baseMiningSpeed = 200;
 function getEffectiveMiningSpeed() {
     let speed = baseMiningSpeed;
     if (gears.speedCoil) speed -= 100;
-    if (quartzOverloadActive) speed = Math.floor(speed / 2); // 2x speed boost
+    if (quartzOverloadActive) speed = Math.floor(speed / 2);
     return Math.max(5, speed);
 }
 
@@ -1166,10 +1141,10 @@ function getEffectiveLuck() {
     }
 
     if (pickaxe === "t2_quartz") {
-        l += 0.05; // Base passive modifier (+1.05x total)
-        l += (crystalResonanceCharges * 0.02); // Crystal Resonance stack
+        l += 0.05;
+        l += (crystalResonanceCharges * 0.02);
         if (quartzOverloadActive) {
-            l = 2.5; // Flat override during Overload
+            l = 2.5;
         }
     }
 
@@ -1210,20 +1185,13 @@ function updatePickaxeInfo() {
 
 function showNotification(msg) {
     const container = document.getElementById("notification-container");
-    
-    // Create the notification element
     const notification = document.createElement("div");
     notification.className = "notification-bubble";
     notification.textContent = msg;
-    
-    // Append it to the stack container
     container.appendChild(notification);
     
-    // Start the fade-out process after 2 seconds
     setTimeout(() => {
         notification.classList.add("fade-out");
-        
-        // Remove the element completely after the CSS transition ends (0.5s)
         setTimeout(() => {
             notification.remove();
         }, 500);
@@ -1305,7 +1273,6 @@ document.getElementById("autoBtn").onclick = () => {
 
 document.getElementById("clearBtn").onclick = () => { output.innerHTML = ""; };
 
-// Render Blacksmith Pickaxe UI
 const blacksmithToggle = document.getElementById("blacksmithToggle");
 const blacksmithPanel = document.getElementById("blacksmithPanel");
 const closeBlacksmith = document.getElementById("closeBlacksmith");
@@ -1382,18 +1349,6 @@ function craftPickaxe(id) {
     showNotification(`Crafted ${p.name}!`);
 }
 
-// Render Gears Workbench UI
-const gearsToggle = document.getElementById("gearsToggle");
-const gearsPanel = document.getElementById("gearsPanel");
-const closeGears = document.getElementById("closeGears");
-
-gearsToggle.onclick = () => {
-    renderGears();
-    gearsPanel.style.display = "block";
-};
-closeGears.onclick = () => { gearsPanel.style.display = "none"; };
-
-// Render Gears Workbench UI
 const gearsToggle = document.getElementById("gearsToggle");
 const gearsPanel = document.getElementById("gearsPanel");
 const closeGears = document.getElementById("closeGears");
@@ -1408,10 +1363,8 @@ function renderGears() {
     const container = document.getElementById("gearsListContainer");
     container.innerHTML = "";
 
-    // Count currently active gears
     let activeGearCount = Object.values(gears).filter(Boolean).length;
 
-    // Slot Upgrade Card
     if (gearSlots < maxGearLimit) {
         let slotCost = getNextSlotCost();
         const upgradeCard = document.createElement("div");
@@ -1426,13 +1379,11 @@ function renderGears() {
         container.appendChild(upgradeCard);
     }
 
-    // Status Header showing current usage
     const statusDiv = document.createElement("div");
     statusDiv.style.cssText = "font-size:0.875rem; margin-bottom:12px; color:var(--accent-blue); text-align:center;";
     statusDiv.textContent = `Equipped Gears: ${activeGearCount} / ${gearSlots}`;
     container.appendChild(statusDiv);
 
-    // Render individual gears
     gearsDefinitions.forEach(g => {
         const isOwned = gears[g.id];
         const card = document.createElement("div");
@@ -1484,7 +1435,6 @@ function craftGear(id) {
     const g = gearsDefinitions.find(item => item.id === id);
     if (!g || gears[id]) return;
 
-    // Count currently active gears
     let activeGearCount = Object.values(gears).filter(Boolean).length;
     if (activeGearCount >= gearSlots) {
         return showNotification(`Gear slot limit reached (${gearSlots}). Buy more slots to equip this!`);
