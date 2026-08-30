@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mining Game</title>
+<title>Low-Stakes Mining Game</title>
 <style>
     :root {
         --bg-color: #0d0f12;
@@ -340,8 +340,6 @@
     .rarity-enigmatic { color: #f43f5e; }
     .rarity-unfathomable { color: #6366f1; }
     .rarity-cosmic { color: #38bdf8; font-weight: bold; }
-    .rarity-divine { color: #facc15; font-weight: bold; }
-    .rarity-infinite { color: #ec4899; font-weight: bold; }
     .rarity-layer { color: var(--text-muted); }
     .rarity-lava { color: var(--accent-red); }
 </style>
@@ -372,7 +370,7 @@
         </div>
 
         <div class="header">
-            <h1>⛏️ Mining Simulator</h1>
+            <h1>⛏️ Low-Stakes Mining Simulator</h1>
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">Balance</div>
@@ -443,6 +441,7 @@
 <script>
 let currentLayer = 1;
 
+// Filtered out ores above 1,000,000,000 rarity
 const ores = [
     {name:"Stone", chance:0, money:5, tier:"Layer"},
     {name:"Copper", chance:40, money:10, tier:"Common"},
@@ -470,9 +469,7 @@ const ores = [
     {name:"Gradience", chance:61345755, money:50000, tier:"Enigmatic"},
     {name:"Vaporwave Crystal", chance:90000000, money:75000, tier:"Enigmatic"},
     {name:"Endozivite", chance:247010000, money:100000, tier:"Unfathomable"},
-    {name:"Hyperion Star", chance:750000000, money:350000, tier:"Cosmic"},
-    {name:"Chronos Shard", chance:2500000000, money:1200000, tier:"Divine"},
-    {name:"Omni Core", chance:10000000000, money:5000000, tier:"Infinite"}
+    {name:"Hyperion Star", chance:750000000, money:350000, tier:"Cosmic"}
 ];
 
 const lavaOres = [
@@ -524,9 +521,7 @@ const lavaOres = [
     {name:"Cindralith", chance:95000000, money:100000, tier:"Enigmatic"},
     {name:"Phlegron", chance:200000000, money:150000, tier:"Unfathomable"},
     {name:"Erebrium", chance:700000000, money:300000, tier:"Unfathomable"},
-    {name:"Pyroxis", chance:800000000, money:500000, tier:"Cosmic"},
-    {name:"Solar Flare", chance:3000000000, money:1800000, tier:"Divine"},
-    {name:"Supernova", chance:10000000000, money:6000000, tier:"Infinite"}
+    {name:"Pyroxis", chance:800000000, money:500000, tier:"Cosmic"}
 ];
 
 const basaltOres = [
@@ -556,10 +551,7 @@ const basaltOres = [
     {name:"Glacielle", chance:31400000, money:35000, tier:"Transcendent"},
     {name:"Cybernetium", chance:52400000, money:50000, tier:"Enigmatic"},
     {name:"Bulbalescense", chance:81818181, money:75000, tier:"Enigmatic"},
-    {name:"Inclemetite", chance:386500000, money:100000, tier:"Unfathomable"},
-    {name:"Void Crystal", chance:1500000000, money:800000, tier:"Cosmic"},
-    {name:"Abyssal Heart", chance:4500000000, money:2500000, tier:"Divine"},
-    {name:"Singularity", chance:10000000000, money:8000000, tier:"Infinite"}
+    {name:"Inclemetite", chance:386500000, money:100000, tier:"Unfathomable"}
 ];
 
 const crystalOres = [
@@ -574,9 +566,7 @@ const crystalOres = [
     {name:"Radiance Crystal", chance:950000, money:25000, tier:"Mythic"},
     {name:"Celestial Diamond", chance:5000000, money:80000, tier:"Exotic"},
     {name:"Astral Prism", chance:35000000, money:250000, tier:"Exquisite"},
-    {name:"Supernova Gem", chance:180000000, money:1000000, tier:"Transcendent"},
-    {name:"Shard of Light", chance:1200000000, money:5000000, tier:"Cosmic"},
-    {name:"Eternal Catalyst", chance:8000000000, money:20000000, tier:"Divine"}
+    {name:"Supernova Gem", chance:180000000, money:1000000, tier:"Transcendent"}
 ];
 
 const quantumOres = [
@@ -590,9 +580,7 @@ const quantumOres = [
     {name:"Entropy Cluster", chance:2100000, money:180000, tier:"Mythic"},
     {name:"Cosmic Essence", chance:15000000, money:600000, tier:"Exotic"},
     {name:"Event Horizon", chance:90000000, money:2500000, tier:"Exquisite"},
-    {name:"Dimensional Anchor", chance:500000000, money:10000000, tier:"Transcendent"},
-    {name:"Timeless Relic", chance:3000000000, money:40000000, tier:"Cosmic"},
-    {name:"Omnipresent Spark", chance:10000000000, money:150000000, tier:"Infinite"}
+    {name:"Dimensional Anchor", chance:500000000, money:10000000, tier:"Transcendent"}
 ];
 
 const variants = [
@@ -602,6 +590,7 @@ const variants = [
     {name:"quantum", chance:40, multiplier:3}
 ];
 
+// Capped pickaxes at T2
 const pickaxeDefinitions = [
     { 
         id: "t1_flint", 
@@ -624,135 +613,16 @@ const pickaxeDefinitions = [
             { type: "passive_step", step: 5, extraBlocks: 2, name: "Iron Pulse" },
             { type: "active_burst", proc: 1/120, count: 25, name: "Vein Shatter" }
         ]
-    },
-    { 
-        id: "t3_cobalt", 
-        name: "T3: Cobalt Pulse Drill", 
-        req: { Cobalt: 15, Agate: 50, money: 10000 }, 
-        desc: "[Passive] Resonant Frequency: Every 4th block mines 3x ores. [Active] Sonic Boom (1/100): Mines 50 ores instantly.", 
-        luckMod: 1.25,
-        abilities: [
-            { type: "passive_step", step: 4, extraBlocks: 2, name: "Resonant Frequency" },
-            { type: "active_burst", proc: 1/100, count: 50, name: "Sonic Boom" }
-        ]
-    },
-    { 
-        id: "t4_amber", 
-        name: "T4: Amber Razor", 
-        req: { Amber: 20, Orpiment: 5, money: 50000 }, 
-        desc: "[Passive] Preserved Luck: +0.25x Base Luck. [Active] Resin Slice (1/90): Mines 75 ores. [Active] Amber Flare (1/350): Mines 150 ores.", 
-        luckMod: 1.25,
-        abilities: [
-            { type: "passive_luck", bonusLuck: 0.25, name: "Preserved Luck" },
-            { type: "active_burst", proc: 1/90, count: 75, name: "Resin Slice" },
-            { type: "active_burst", proc: 1/350, count: 150, name: "Amber Flare" }
-        ]
-    },
-    { 
-        id: "t5_petrified", 
-        name: "T5: Fossil Demolisher", 
-        req: { "Petrified Wood": 5, Phlogopite: 10, money: 250000 }, 
-        desc: "[Passive] Deep Root: Every 2nd block mines 2x. [Active] Ancient Cataclysm (1/80): Mines 120 ores. [Active] Tremor (1/300): Mines 250 ores.", 
-        luckMod: 1.5,
-        abilities: [
-            { type: "passive_step", step: 2, extraBlocks: 1, name: "Deep Root" },
-            { type: "active_burst", proc: 1/80, count: 120, name: "Ancient Cataclysm" },
-            { type: "active_burst", proc: 1/300, count: 250, name: "Tremor" }
-        ]
-    },
-    { 
-        id: "t6_elusium", 
-        name: "T6: Elusium Vaporizer", 
-        req: { Elusium: 3, Antiquite: 2, money: 1000000 }, 
-        desc: "[Passive] Vapor Stream: Every 3rd block mines 4x. [Passive] Quantum Resonance: +0.5x Luck. [Active] Sublimation Burst (1/70): Mines 200 ores.", 
-        luckMod: 1.0,
-        abilities: [
-            { type: "passive_step", step: 3, extraBlocks: 3, name: "Vapor Stream" },
-            { type: "passive_luck", bonusLuck: 0.5, name: "Quantum Resonance" },
-            { type: "active_burst", proc: 1/70, count: 200, name: "Sublimation Burst" }
-        ]
-    },
-    { 
-        id: "t7_unobtainium", 
-        name: "T7: Unobtainium Excavator", 
-        req: { Unobtainium: 2, Aesthetium: 2, money: 10000000 }, 
-        desc: "[Passive] Singularity Pull: Every block mines 2x. [Passive] Core Overclock: +1.0x Luck. [Active] Void Blast (1/60): Mines 400 ores.", 
-        luckMod: 1.0,
-        abilities: [
-            { type: "passive_step", step: 1, extraBlocks: 1, name: "Singularity Pull" },
-            { type: "passive_luck", bonusLuck: 1.0, name: "Core Overclock" },
-            { type: "active_burst", proc: 1/60, count: 400, name: "Void Blast" }
-        ]
-    },
-    { 
-        id: "t8_penumbrosia", 
-        name: "T8: Penumbra Harvester", 
-        req: { Penumbrosia: 2, Aegistone: 1, money: 100000000 }, 
-        desc: "[Passive] Eclipse: Every 5th block mines 10x. [Passive] Dark Matter: +1.5x Luck. [Active] Shadow Harvest (1/50): Mines 750 ores. [Active] Supernova (1/500): Mines 2,000 ores.", 
-        luckMod: 1.0,
-        abilities: [
-            { type: "passive_step", step: 5, extraBlocks: 9, name: "Eclipse" },
-            { type: "passive_luck", bonusLuck: 1.5, name: "Dark Matter" },
-            { type: "active_burst", proc: 1/50, count: 750, name: "Shadow Harvest" },
-            { type: "active_burst", proc: 1/500, count: 2000, name: "Supernova Strike" }
-        ]
-    },
-    { 
-        id: "t9_endozivite", 
-        name: "T9: Endozivite World-Crusher", 
-        req: { Endozivite: 2, Pasivium: 1, money: 1000000000 }, 
-        desc: "[Passive] Tectonic Shift: Every 2nd block mines 5x. [Passive] Hyper Luck: +3.0x Luck. [Active] Planetary Shatter (1/30): Mines 1,500 ores. [Active] Core Collapse (1/250): Mines 5,000 ores.", 
-        luckMod: 1.0,
-        abilities: [
-            { type: "passive_step", step: 2, extraBlocks: 4, name: "Tectonic Shift" },
-            { type: "passive_luck", bonusLuck: 3.0, name: "Hyper Luck" },
-            { type: "active_burst", proc: 1/30, count: 1500, name: "Planetary Shatter" },
-            { type: "active_burst", proc: 1/250, count: 5000, name: "Core Collapse" }
-        ]
-    },
-    { 
-        id: "t10_infinity", 
-        name: "T10: Infinity Matrix", 
-        req: { "Hyperion Star": 1, "Chronos Shard": 1, money: 25000000000 }, 
-        desc: "[Passive] Infinite Duplication: Every block mines 10x. [Passive] Transcendent Aura: +5.0x Luck. [Active] Matrix Eradication (1/15): Mines 3,000 ores. [Active] Big Bang (1/100): Mines 15,000 ores.", 
-        luckMod: 1.0,
-        abilities: [
-            { type: "passive_step", step: 1, extraBlocks: 9, name: "Infinite Duplication" },
-            { type: "passive_luck", bonusLuck: 5.0, name: "Transcendent Aura" },
-            { type: "active_burst", proc: 1/15, count: 3000, name: "Matrix Eradication" },
-            { type: "active_burst", proc: 1/100, count: 15000, name: "Big Bang" }
-        ]
     }
 ];
 
+// Kept only the Speed Coil
 const gearsDefinitions = [
-    { id: "speedCoil", name: "Speed Coil", cost: 1000, req: { Copper: 20 }, desc: "Reduces mining interval by 10ms." },
-    { id: "luckMagnet", name: "Luck Magnet", cost: 25000, req: { Quartz: 100, Iron: 100 }, desc: "Passively adds +0.5x to your Luck Multiplier." },
-    { id: "autoSmelter", name: "Auto Smelter", cost: 250000, req: { Coal: 200, Amber: 10 }, desc: "Gives a 15% bonus value on all mined ores." },
-    { id: "deepSeeker", name: "Deep Seeker Module", cost: 800000, req: { Basaltium: 5, Ignicite: 15 }, desc: "Passively increases rare ore luck by +0.75x in Lava and Basalt layers." },
-    { id: "quantumAmplifier", name: "Quantum Amplifier", cost: 5000000, req: { Cobalt: 50, Chrysoberyl: 10 }, desc: "Doubles the frequency of variant spawns." },
-    { id: "prismLens", name: "Prism Refractor", cost: 20000000, req: { Amethyst: 100, Prismite: 25, Fluorite: 5 }, desc: "Grants a 5% chance to double all drops in Layer 4 (Crystal Caverns)." },
-    { id: "overclockEngine", name: "Overclock Engine", cost: 100000000, req: { Bluesteel: 20, Freon: 2 }, desc: "Reduces mining interval by an additional 15ms." },
-    { id: "chronoCapacitor", name: "Chrono Capacitor", cost: 300000000, req: { "Chrono Dust": 30, "Tachyon Gem": 2, "Cryoclase": 10 }, desc: "Passively increases mining speed and yields +1.0x Luck." },
-    { id: "midasTouch", name: "Midas Artifact", cost: 1000000000, req: { Gold: 100, Pasivium: 1 }, desc: "Increases variant multiplier bonus by +1.0x." },
-    { id: "voidDistorter", name: "Void Distortion Field", cost: 3500000000, req: { "Dark Plasma": 150, "Singularity Core": 3, "Elysian": 1 }, desc: "Converts 1% of layer-filler stone/matter drops into rare ores." },
-    { id: "hyperSifter", name: "Hyper Sifter", cost: 12000000000, req: { "Celestial Diamond": 2, "Ethereal Node": 15, "Volcryst": 10 }, desc: "Increases base earnings from all blocks by 50%." },
-    { id: "omegaStabilizer", name: "Omega Stabilizer", cost: 50000000000, req: { "Dimensional Anchor": 1, "Radiance Crystal": 5, "Unobtainium": 5 }, desc: "Ultimate Module: Grants +2.5x Luck across all layers." }
+    { id: "speedCoil", name: "Speed Coil", cost: 1000, req: { Copper: 20 }, desc: "Reduces mining interval by 10ms." }
 ];
 
 let gears = {
-    speedCoil: false,
-    luckMagnet: false,
-    autoSmelter: false,
-    deepSeeker: false,
-    quantumAmplifier: false,
-    prismLens: false,
-    overclockEngine: false,
-    chronoCapacitor: false,
-    midasTouch: false,
-    voidDistorter: false,
-    hyperSifter: false,
-    omegaStabilizer: false
+    speedCoil: false
 };
 
 let variantToggles = {};
@@ -851,19 +721,16 @@ document.getElementById("layerSelect").onchange = function() {
 function rollVariants() {
     let rolled = [];
     let mult = 1;
-    let modChance = gears.quantumAmplifier ? 2 : 1;
-    let extraMult = gears.midasTouch ? 1.0 : 0.0;
 
     variants.forEach(v => {
-        if(Math.random() * (v.chance / modChance) < 1){
+        if(Math.random() * v.chance < 1){
             rolled.push(v.name);
-            mult *= (v.multiplier + extraMult);
+            mult *= v.multiplier;
         }
     });
     return {rolled, mult};
 }
 
-// Bulk Mining Engine for High-Performance Multi-Block Drops
 function bulkMine(count) {
     let oreList;
     if (currentLayer == 2) oreList = [lavaLayerBlock, ...lavaOres];
@@ -887,13 +754,6 @@ function bulkMine(count) {
                 break;
             }
         }
-        
-        if (!selectedOre && gears.voidDistorter && Math.random() < 0.01) {
-            let rareCandidates = oreList.filter(o => o.chance > 0);
-            if (rareCandidates.length > 0) {
-                selectedOre = rareCandidates[Math.floor(Math.random() * rareCandidates.length)];
-            }
-        }
 
         if (!selectedOre) {
             selectedOre = oreList.find(o => o.chance === 0) || oreList[0];
@@ -901,34 +761,26 @@ function bulkMine(count) {
 
         const {rolled, mult} = rollVariants();
         let earned = selectedOre.money * mult;
-        if (gears.autoSmelter) earned *= 1.15;
-        if (gears.hyperSifter) earned *= 1.5;
 
-        let dropMultiplier = 1;
-        if (currentLayer === 4 && gears.prismLens && Math.random() < 0.05) {
-            dropMultiplier = 2;
-        }
-
-        totalEarned += earned * dropMultiplier;
+        totalEarned += earned;
 
         if (!summary[selectedOre.name]) {
             summary[selectedOre.name] = { count: 0, tier: selectedOre.tier, info: selectedOre };
         }
-        summary[selectedOre.name].count += dropMultiplier;
+        summary[selectedOre.name].count += 1;
 
         if (!rarestRolled || selectedOre.chance > rarestRolled.chance) {
             rarestRolled = selectedOre;
         }
 
-        // Inventory aggregate
         if (!inventory[selectedOre.name]) {
             inventory[selectedOre.name] = {count:0, variants:{plain:0,gold:0,silver:0,ionized:0,quantum:0}};
         }
-        inventory[selectedOre.name].count += dropMultiplier;
+        inventory[selectedOre.name].count += 1;
         if (rolled.length > 0) {
-            rolled.forEach(v => { inventory[selectedOre.name].variants[v] += dropMultiplier; });
+            rolled.forEach(v => { inventory[selectedOre.name].variants[v] += 1; });
         } else {
-            inventory[selectedOre.name].variants.plain += dropMultiplier;
+            inventory[selectedOre.name].variants.plain += 1;
         }
         updateLeaderboard(selectedOre.name, selectedOre.tier);
     }
@@ -1049,18 +901,11 @@ let baseMiningSpeed = 50;
 function getEffectiveMiningSpeed() {
     let speed = baseMiningSpeed;
     if (gears.speedCoil) speed -= 10;
-    if (gears.overclockEngine) speed -= 15;
-    if (gears.chronoCapacitor) speed -= 5;
     return Math.max(5, speed);
 }
 
 function getEffectiveLuck() {
     let l = luck;
-    if (gears.luckMagnet) l += 0.5;
-    if (gears.deepSeeker && (currentLayer === 2 || currentLayer === 3)) l += 0.75;
-    if (gears.chronoCapacitor) l += 1.0;
-    if (gears.omegaStabilizer) l += 2.5;
-
     let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
     if (pDef) {
         pDef.abilities.forEach(ab => {
@@ -1107,7 +952,6 @@ function handleMine() {
     let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
     let totalBlocksToMine = 1;
 
-    // Process Pickaxe Passives
     if (pDef) {
         pDef.abilities.forEach(ab => {
             if (ab.type === "passive_step") {
@@ -1118,11 +962,9 @@ function handleMine() {
         });
     }
 
-    // Process Base Mining Action
     let result = bulkMine(totalBlocksToMine);
     renderBulkResult(result, pDef ? pDef.name : "Hand Pick");
 
-    // Process Active Ability Triggers
     if (pDef) {
         pDef.abilities.forEach(ab => {
             if (ab.type === "active_burst") {
@@ -1155,7 +997,6 @@ document.getElementById("autoBtn").onclick = () => {
 
 document.getElementById("clearBtn").onclick = () => { output.innerHTML = ""; };
 
-// Render Blacksmith Pickaxe UI
 const blacksmithToggle = document.getElementById("blacksmithToggle");
 const blacksmithPanel = document.getElementById("blacksmithPanel");
 const closeBlacksmith = document.getElementById("closeBlacksmith");
@@ -1232,7 +1073,6 @@ function craftPickaxe(id) {
     showNotification(`Crafted ${p.name}!`);
 }
 
-// Render Gears Workbench UI
 const gearsToggle = document.getElementById("gearsToggle");
 const gearsPanel = document.getElementById("gearsPanel");
 const closeGears = document.getElementById("closeGears");
