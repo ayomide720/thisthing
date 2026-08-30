@@ -405,10 +405,12 @@
             <option value="1">Layer 1 (Normal)</option>
             <option value="2">Layer 2 (Lava Layer)</option>
             <option value="3">Layer 3 (Basalt Layer)</option>
+            <option value="4">Layer 4 (Crystal Caverns)</option>
+            <option value="5">Layer 5 (Quantum Void)</option>
         </select>
 
         <div class="control-row" style="margin-bottom: 6px;">
-            <label for="oreInfoSelect" style="font-size:0.75rem; color: var(--text-muted); text-transform:uppercase;">Ore Index</label>
+            <label for="oreInfoSelect" style="font-size:0.75rem; color: var(--text-muted); text-transform:UPPERCASE;">Ore Index</label>
         </div>
         <select id="oreInfoSelect" style="margin-bottom:12px;"></select>
         
@@ -560,6 +562,39 @@ const basaltOres = [
     {name:"Singularity", chance:10000000000, money:8000000, tier:"Infinite"}
 ];
 
+const crystalOres = [
+    {name:"Crystal Shard", chance:0, money:25, tier:"Layer"},
+    {name:"Amethyst", chance:30, money:50, tier:"Common"},
+    {name:"Geode", chance:80, money:100, tier:"Common"},
+    {name:"Prismite", chance:600, money:250, tier:"Uncommon"},
+    {name:"Fluorite", chance:2500, money:600, tier:"Uncommon"},
+    {name:"Spinel", chance:12000, money:1500, tier:"Rare"},
+    {name:"Alexandrite", chance:45000, money:3500, tier:"Master"},
+    {name:"Spectrumite", chance:180000, money:9000, tier:"Surreal"},
+    {name:"Radiance Crystal", chance:950000, money:25000, tier:"Mythic"},
+    {name:"Celestial Diamond", chance:5000000, money:80000, tier:"Exotic"},
+    {name:"Astral Prism", chance:35000000, money:250000, tier:"Exquisite"},
+    {name:"Supernova Gem", chance:180000000, money:1000000, tier:"Transcendent"},
+    {name:"Shard of Light", chance:1200000000, money:5000000, tier:"Cosmic"},
+    {name:"Eternal Catalyst", chance:8000000000, money:20000000, tier:"Divine"}
+];
+
+const quantumOres = [
+    {name:"Void Matter", chance:0, money:100, tier:"Layer"},
+    {name:"Flux Particle", chance:40, money:200, tier:"Common"},
+    {name:"Dark Plasma", chance:150, money:500, tier:"Common"},
+    {name:"Chrono Dust", chance:1200, money:1500, tier:"Uncommon"},
+    {name:"Ethereal Node", chance:8000, money:4500, tier:"Rare"},
+    {name:"Singularity Core", chance:60000, money:15000, tier:"Master"},
+    {name:"Tachyon Gem", chance:350000, money:50000, tier:"Surreal"},
+    {name:"Entropy Cluster", chance:2100000, money:180000, tier:"Mythic"},
+    {name:"Cosmic Essence", chance:15000000, money:600000, tier:"Exotic"},
+    {name:"Event Horizon", chance:90000000, money:2500000, tier:"Exquisite"},
+    {name:"Dimensional Anchor", chance:500000000, money:10000000, tier:"Transcendent"},
+    {name:"Timeless Relic", chance:3000000000, money:40000000, tier:"Cosmic"},
+    {name:"Omnipresent Spark", chance:10000000000, money:150000000, tier:"Infinite"}
+];
+
 const variants = [
     {name:"gold", chance:10, multiplier:2},
     {name:"silver", chance:20, multiplier:1.5},
@@ -567,7 +602,6 @@ const variants = [
     {name:"quantum", chance:40, multiplier:3}
 ];
 
-// Refactored T1 - T10 Pickaxes with active/passive abilities
 const pickaxeDefinitions = [
     { 
         id: "t1_flint", 
@@ -695,18 +729,30 @@ const gearsDefinitions = [
     { id: "speedCoil", name: "Speed Coil", cost: 1000, req: { Copper: 20 }, desc: "Reduces mining interval by 10ms." },
     { id: "luckMagnet", name: "Luck Magnet", cost: 25000, req: { Quartz: 100, Iron: 100 }, desc: "Passively adds +0.5x to your Luck Multiplier." },
     { id: "autoSmelter", name: "Auto Smelter", cost: 250000, req: { Coal: 200, Amber: 10 }, desc: "Gives a 15% bonus value on all mined ores." },
+    { id: "deepSeeker", name: "Deep Seeker Module", cost: 800000, req: { Basaltium: 5, Ignicite: 15 }, desc: "Passively increases rare ore luck by +0.75x in Lava and Basalt layers." },
     { id: "quantumAmplifier", name: "Quantum Amplifier", cost: 5000000, req: { Cobalt: 50, Chrysoberyl: 10 }, desc: "Doubles the frequency of variant spawns." },
+    { id: "prismLens", name: "Prism Refractor", cost: 20000000, req: { Amethyst: 100, Prismite: 25, Fluorite: 5 }, desc: "Grants a 5% chance to double all drops in Layer 4 (Crystal Caverns)." },
     { id: "overclockEngine", name: "Overclock Engine", cost: 100000000, req: { Bluesteel: 20, Freon: 2 }, desc: "Reduces mining interval by an additional 15ms." },
-    { id: "midasTouch", name: "Midas Artifact", cost: 1000000000, req: { Gold: 100, Pasivium: 1 }, desc: "Increases variant multiplier bonus by +1.0x." }
+    { id: "chronoCapacitor", name: "Chrono Capacitor", cost: 300000000, req: { "Chrono Dust": 30, "Tachyon Gem": 2, "Cryoclase": 10 }, desc: "Passively increases mining speed and yields +1.0x Luck." },
+    { id: "midasTouch", name: "Midas Artifact", cost: 1000000000, req: { Gold: 100, Pasivium: 1 }, desc: "Increases variant multiplier bonus by +1.0x." },
+    { id: "voidDistorter", name: "Void Distortion Field", cost: 3500000000, req: { "Dark Plasma": 150, "Singularity Core": 3, "Elysian": 1 }, desc: "Converts 1% of layer-filler stone/matter drops into rare ores." },
+    { id: "hyperSifter", name: "Hyper Sifter", cost: 12000000000, req: { "Celestial Diamond": 2, "Ethereal Node": 15, "Volcryst": 10 }, desc: "Increases base earnings from all blocks by 50%." },
+    { id: "omegaStabilizer", name: "Omega Stabilizer", cost: 50000000000, req: { "Dimensional Anchor": 1, "Radiance Crystal": 5, "Unobtainium": 5 }, desc: "Ultimate Module: Grants +2.5x Luck across all layers." }
 ];
 
 let gears = {
     speedCoil: false,
     luckMagnet: false,
     autoSmelter: false,
+    deepSeeker: false,
     quantumAmplifier: false,
+    prismLens: false,
     overclockEngine: false,
-    midasTouch: false
+    chronoCapacitor: false,
+    midasTouch: false,
+    voidDistorter: false,
+    hyperSifter: false,
+    omegaStabilizer: false
 };
 
 let variantToggles = {};
@@ -750,6 +796,8 @@ function fillOreDropdown(layer) {
     let list;
     if (layer == 2) list = [lavaLayerBlock, ...lavaOres];
     else if (layer == 3) list = basaltOres;
+    else if (layer == 4) list = crystalOres;
+    else if (layer == 5) list = quantumOres;
     else list = ores.concat([{name:"StoneBlock", chance:1, money:5, tier:"Layer"}]);
 
     list.forEach((ore, idx) => {
@@ -762,7 +810,7 @@ function fillOreDropdown(layer) {
 }
 
 function showOreInfo(ore) {
-    let chanceText = (ore.name === "StoneBlock" || ore.name === "Lava" || ore.name === "Basalt") ? "Always" : `1/${ore.chance.toLocaleString()}`;
+    let chanceText = (ore.name === "StoneBlock" || ore.name === "Lava" || ore.name === "Basalt" || ore.name === "Crystal Shard" || ore.name === "Void Matter") ? "Always" : `1/${ore.chance.toLocaleString()}`;
     let tierClass = `rarity-${ore.tier.toLowerCase()}`;
     oreInfoBox.innerHTML = `
         <span class="${tierClass}" style="font-weight:bold; font-size: 1rem;">${ore.name}</span><br>
@@ -776,6 +824,8 @@ oreInfoSelect.onchange = function() {
     let list;
     if (currentLayer == 2) list = [lavaLayerBlock, ...lavaOres];
     else if (currentLayer == 3) list = basaltOres;
+    else if (currentLayer == 4) list = crystalOres;
+    else if (currentLayer == 5) list = quantumOres;
     else list = ores.concat([{name:"StoneBlock", chance:1, money:5, tier:"Layer"}]);
     showOreInfo(list[this.value]);
 };
@@ -815,7 +865,13 @@ function rollVariants() {
 
 // Bulk Mining Engine for High-Performance Multi-Block Drops
 function bulkMine(count) {
-    let oreList = currentLayer == 2 ? [lavaLayerBlock, ...lavaOres] : (currentLayer == 3 ? basaltOres : ores);
+    let oreList;
+    if (currentLayer == 2) oreList = [lavaLayerBlock, ...lavaOres];
+    else if (currentLayer == 3) oreList = basaltOres;
+    else if (currentLayer == 4) oreList = crystalOres;
+    else if (currentLayer == 5) oreList = quantumOres;
+    else oreList = ores;
+
     let effectiveLuck = getEffectiveLuck();
 
     let totalEarned = 0;
@@ -831,20 +887,34 @@ function bulkMine(count) {
                 break;
             }
         }
+        
+        if (!selectedOre && gears.voidDistorter && Math.random() < 0.01) {
+            let rareCandidates = oreList.filter(o => o.chance > 0);
+            if (rareCandidates.length > 0) {
+                selectedOre = rareCandidates[Math.floor(Math.random() * rareCandidates.length)];
+            }
+        }
+
         if (!selectedOre) {
-            selectedOre = currentLayer == 2 ? lavaLayerBlock : (currentLayer == 3 ? oreList.find(o => o.chance === 0) : oreList.find(o => o.chance === 0));
+            selectedOre = oreList.find(o => o.chance === 0) || oreList[0];
         }
 
         const {rolled, mult} = rollVariants();
         let earned = selectedOre.money * mult;
         if (gears.autoSmelter) earned *= 1.15;
+        if (gears.hyperSifter) earned *= 1.5;
 
-        totalEarned += earned;
+        let dropMultiplier = 1;
+        if (currentLayer === 4 && gears.prismLens && Math.random() < 0.05) {
+            dropMultiplier = 2;
+        }
+
+        totalEarned += earned * dropMultiplier;
 
         if (!summary[selectedOre.name]) {
             summary[selectedOre.name] = { count: 0, tier: selectedOre.tier, info: selectedOre };
         }
-        summary[selectedOre.name].count++;
+        summary[selectedOre.name].count += dropMultiplier;
 
         if (!rarestRolled || selectedOre.chance > rarestRolled.chance) {
             rarestRolled = selectedOre;
@@ -854,11 +924,11 @@ function bulkMine(count) {
         if (!inventory[selectedOre.name]) {
             inventory[selectedOre.name] = {count:0, variants:{plain:0,gold:0,silver:0,ionized:0,quantum:0}};
         }
-        inventory[selectedOre.name].count++;
+        inventory[selectedOre.name].count += dropMultiplier;
         if (rolled.length > 0) {
-            rolled.forEach(v => { inventory[selectedOre.name].variants[v]++; });
+            rolled.forEach(v => { inventory[selectedOre.name].variants[v] += dropMultiplier; });
         } else {
-            inventory[selectedOre.name].variants.plain++;
+            inventory[selectedOre.name].variants.plain += dropMultiplier;
         }
         updateLeaderboard(selectedOre.name, selectedOre.tier);
     }
@@ -890,12 +960,14 @@ function getOreInfo(name) {
     if (name === "StoneBlock") return {name:"StoneBlock", chance:1, money:5, tier:"Layer"};
     if (name === "Lava") return {name:"Lava", chance:0, money:5, tier:"Lava"};
     if (name === "Basalt") return {name:"Basalt", chance:0, money:5, tier:"Layer"};
-    return ores.find(o => o.name === name) || lavaOres.find(o => o.name === name) || basaltOres.find(o => o.name === name);
+    if (name === "Crystal Shard") return {name:"Crystal Shard", chance:0, money:25, tier:"Layer"};
+    if (name === "Void Matter") return {name:"Void Matter", chance:0, money:100, tier:"Layer"};
+    return ores.find(o => o.name === name) || lavaOres.find(o => o.name === name) || basaltOres.find(o => o.name === name) || crystalOres.find(o => o.name === name) || quantumOres.find(o => o.name === name);
 }
 
 function updateLeaderboard(oreName, tier) {
     const info = getOreInfo(oreName);
-    if (!info || info.name === "StoneBlock" || info.name === "Lava" || info.name === "Basalt") return;
+    if (!info || info.name === "StoneBlock" || info.name === "Lava" || info.name === "Basalt" || info.name === "Crystal Shard" || info.name === "Void Matter") return;
     if (leaderboard.some(e => e.name === oreName)) return;
     leaderboard.push({name: oreName, tier: info.tier, chance: info.chance, time: Date.now()});
     leaderboard.sort((a, b) => b.chance - a.chance || a.time - b.time);
@@ -978,12 +1050,17 @@ function getEffectiveMiningSpeed() {
     let speed = baseMiningSpeed;
     if (gears.speedCoil) speed -= 10;
     if (gears.overclockEngine) speed -= 15;
+    if (gears.chronoCapacitor) speed -= 5;
     return Math.max(5, speed);
 }
 
 function getEffectiveLuck() {
     let l = luck;
     if (gears.luckMagnet) l += 0.5;
+    if (gears.deepSeeker && (currentLayer === 2 || currentLayer === 3)) l += 0.75;
+    if (gears.chronoCapacitor) l += 1.0;
+    if (gears.omegaStabilizer) l += 2.5;
+
     let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
     if (pDef) {
         pDef.abilities.forEach(ab => {
