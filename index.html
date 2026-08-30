@@ -1393,6 +1393,17 @@ gearsToggle.onclick = () => {
 };
 closeGears.onclick = () => { gearsPanel.style.display = "none"; };
 
+// Render Gears Workbench UI
+const gearsToggle = document.getElementById("gearsToggle");
+const gearsPanel = document.getElementById("gearsPanel");
+const closeGears = document.getElementById("closeGears");
+
+gearsToggle.onclick = () => {
+    renderGears();
+    gearsPanel.style.display = "block";
+};
+closeGears.onclick = () => { gearsPanel.style.display = "none"; };
+
 function renderGears() {
     const container = document.getElementById("gearsListContainer");
     container.innerHTML = "";
@@ -1421,13 +1432,38 @@ function renderGears() {
     statusDiv.textContent = `Equipped Gears: ${activeGearCount} / ${gearSlots}`;
     container.appendChild(statusDiv);
 
-    // Render individual gears... (keep existing loop for gearsDefinitions)
+    // Render individual gears
     gearsDefinitions.forEach(g => {
-        const isCrafted = gears[g.id];
+        const isOwned = gears[g.id];
         const card = document.createElement("div");
         card.className = "craft-card";
-        // ... rest of your gear card code ...
+        
+        let reqList = [];
+        let canCraft = true;
+
+        for (let item in g.req) {
+            let hasCount = inventory[item]?.count || 0;
+            if (hasCount < g.req[item]) canCraft = false;
+            reqList.push(`${item}: ${hasCount} / ${g.req[item]}`);
+        }
+        if (money < g.cost) canCraft = false;
+        reqList.unshift(`Money: $${g.cost.toLocaleString()}`);
+
+        card.innerHTML = `
+            <b>${g.name}</b>
+            <div style="font-size:0.8125rem; color:var(--text-muted); margin:4px 0;">${g.desc}</div>
+            <div style="font-size:0.75rem; margin-bottom:8px;">${reqList.join(" | ")}</div>
+            <button class="nav-btn" ${isOwned ? "disabled" : ""} onclick="craftGear('${g.id}')">
+                ${isOwned ? "Equipped" : "Craft & Equip"}
+            </button>
+        `;
+        container.appendChild(card);
     });
+}
+
+function getNextSlotCost() {
+    let slotsBought = gearSlots - 3;
+    return Math.floor(5000 * Math.pow(2.2, slotsBought));
 }
 
 function buyGearSlot() {
@@ -1453,30 +1489,6 @@ function craftGear(id) {
     if (activeGearCount >= gearSlots) {
         return showNotification(`Gear slot limit reached (${gearSlots}). Buy more slots to equip this!`);
     }
-
-    if (money < g.cost) return showNotification("Not enough money!");
-    for (let item in g.req) {
-        if ((inventory[item]?.count || 0) < g.req[item]) return showNotification(`Missing ${item}!`);
-    }
-
-    money -= g.cost;
-    for (let item in g.req) {
-        inventory[item].count -= g.req[item];
-    }
-
-    gears[id] = true;
-    renderGears();
-    updateSpeedDisplay();
-    luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
-    moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
-    renderInventory();
-    saveData();
-    showNotification(`Crafted ${g.name}!`);
-}
-
-function craftGear(id) {
-    const g = gearsDefinitions.find(item => item.id === id);
-    if (!g || gears[id]) return;
 
     if (money < g.cost) return showNotification("Not enough money!");
     for (let item in g.req) {
