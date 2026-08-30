@@ -440,6 +440,10 @@
                 <span style="font-weight:600;">Mining Speed</span>
                 <span class="badge" id="speedDisplay">50ms</span>
             </div>
+            <div class="control-row">
+                <span style="font-weight:600;">Proc Boost</span>
+                <span class="badge" id="procBoostDisplay">0%</span>
+            </div>
         </div>
 
         <div id="pickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-bottom: 12px; text-align: center;"></div>
@@ -681,6 +685,7 @@ const pickaxeDefinitions = [
         req: { Stone: 50, Copper: 20, money: 250 }, 
         desc: "[Passive] Double Miner: Every 5th block mines 2 ores. [Active] Surge (1/250): Mines 10 ores instantly.", 
         luckMod: 1.0,
+        procBoost: 0.05, // 5% pick proc boost
         abilities: [
             { type: "passive_step", step: 5, extraBlocks: 1, name: "Double Miner" },
             { type: "active_burst", proc: 1/250, count: 10, name: "Surge" }
@@ -692,6 +697,7 @@ const pickaxeDefinitions = [
         req: { Iron: 100, Quartz: 25, money: 1500 }, 
         desc: "[Passive] Iron Spirit: Stacking luck on mining Iron. [Active] Vein Shatter (1/75): Mines 35 ores with forced 1.15x luck. [Passive] Click Warrior: 10% chance on click to mine 10 ores.", 
         luckMod: 1.0,
+        procBoost: 0.10, // 10% pick proc boost
         abilities: [
             { type: "iron_spirit", name: "Iron Spirit" },
             { type: "active_burst", proc: 1/75, count: 35, forcedLuck: 1.15, name: "Vein Shatter" },
@@ -704,6 +710,7 @@ const pickaxeDefinitions = [
         req: { Quartz: 75, Copper: 40, money: 2500 }, 
         desc: "[Passive] Crystal Resonance: Mining Quartz stacks up to 10 charges (+0.02x luck each). [Active] Quartz Overload (Chargeable): 2x speed, +2.5x flat luck, and double drops for 10s. [Active] Prism Burst (1/80): Shatters 15 blocks with high-luck variant rolls.", 
         luckMod: 1.05,
+        procBoost: 0.15, // 15% pick proc boost
         abilities: [
             { type: "crystal_resonance", name: "Crystal Resonance" },
             { type: "quartz_overload", name: "Quartz Overload", maxCharge: 200 },
@@ -714,7 +721,8 @@ const pickaxeDefinitions = [
 
 const gearsDefinitions = [
     { id: "speedCoil", name: "Speedy Coil", cost: 1000, req: { Copper: 20 }, desc: "Reduces mining speed interval by 100ms." },
-    { id: "flashGrenade", name: "Flash Grenade", cost: 2500, req: { Quartz: 50 }, desc: "Every 2nd block mined has a 1/5 chance to activate a Flash Bomb, mining 30 ores with 0.5x luck, but duplicating ores with a rarity below 100. Does not duplicate layer blocks." }
+    { id: "flashGrenade", name: "Flash Grenade", cost: 2500, req: { Quartz: 50 }, desc: "Every 2nd block mined has a 1/5 chance to activate a Flash Bomb, mining 30 ores with 0.5x luck, but duplicating ores with a rarity below 100. Does not duplicate layer blocks." },
+    { id: "precisionLens", name: "Precision Lens", cost: 4000, req: { Iron: 40 }, desc: "Gear Proc Boost: Increases all ability proc rates by 12%.", procBoost: 0.12 }
 ];
 
 let gearSlots = 3;
@@ -722,7 +730,8 @@ const maxGearLimit = 12;
 
 let gears = {
     speedCoil: false,
-    flashGrenade: false
+    flashGrenade: false,
+    precisionLens: false
 };
 
 let ironSpiritBonus = 0;
@@ -781,7 +790,8 @@ function resetData() {
         gearSlots = 3;
         gears = {
             speedCoil: false,
-            flashGrenade: false
+            flashGrenade: false,
+            precisionLens: false
         };
         location.reload();
     }
@@ -1173,9 +1183,23 @@ function getEffectiveLuck() {
     return l;
 }
 
+function getEffectiveProcBoost() {
+    let boost = 0;
+    let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
+    if (pDef && pDef.procBoost) boost += pDef.procBoost;
+    
+    gearsDefinitions.forEach(g => {
+        if (gears[g.id] && g.procBoost) boost += g.procBoost;
+    });
+    return Math.min(1.0, boost);
+}
+
 const speedDisplay = document.getElementById("speedDisplay");
+const procBoostDisplay = document.getElementById("procBoostDisplay");
+
 function updateSpeedDisplay() {
     speedDisplay.textContent = `${getEffectiveMiningSpeed()}ms`;
+    procBoostDisplay.textContent = `${(getEffectiveProcBoost() * 100).toFixed(0)}%`;
 }
 
 let luck = 1;
@@ -1258,7 +1282,12 @@ function handleMine(isManualClick = false) {
     if (pDef && pDef.abilities) {
         pDef.abilities.forEach(ab => {
             if (ab.type === "active_burst") {
-                if (Math.random() < ab.proc) {
+                let origDenom = 1 / ab.proc;
+                let boost = getEffectiveProcBoost();
+                let adjustedDenom = Math.max(1, Math.round(origDenom * (1 - boost)));
+                let effectiveProc = 1 / adjustedDenom;
+
+                if (Math.random() < effectiveProc) {
                     let forcedLuck = ab.forcedLuck !== undefined ? ab.forcedLuck : null;
                     let burstRes = bulkMine(ab.count, forcedLuck);
                     renderBulkResult(burstRes, `${ab.name} Proc!`);
@@ -1365,6 +1394,7 @@ function craftPickaxe(id) {
     renderInventory();
     renderBlacksmith();
     saveData();
+    updateSpeedDisplay();
     if (pinnedRecipe) updatePinBoard();
     showNotification(`Crafted ${p.name}!`);
 }
