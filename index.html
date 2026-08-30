@@ -685,7 +685,7 @@ const pickaxeDefinitions = [
         req: { Stone: 50, Copper: 20, money: 250 }, 
         desc: "[Passive] Double Miner: Every 5th block mines 2 ores. [Active] Surge (1/250): Mines 10 ores instantly.", 
         luckMod: 1.0,
-        procBoost: 0.05, // 5% pick proc boost
+        procBoost: 0.00, // 5% pick proc boost
         abilities: [
             { type: "passive_step", step: 5, extraBlocks: 1, name: "Double Miner" },
             { type: "active_burst", proc: 1/250, count: 10, name: "Surge" }
@@ -697,7 +697,7 @@ const pickaxeDefinitions = [
         req: { Iron: 100, Quartz: 25, money: 1500 }, 
         desc: "[Passive] Iron Spirit: Stacking luck on mining Iron. [Active] Vein Shatter (1/75): Mines 35 ores with forced 1.15x luck. [Passive] Click Warrior: 10% chance on click to mine 10 ores.", 
         luckMod: 1.0,
-        procBoost: 0.10, // 10% pick proc boost
+        procBoost: 0.00, // 10% pick proc boost
         abilities: [
             { type: "iron_spirit", name: "Iron Spirit" },
             { type: "active_burst", proc: 1/75, count: 35, forcedLuck: 1.15, name: "Vein Shatter" },
@@ -710,7 +710,7 @@ const pickaxeDefinitions = [
         req: { Quartz: 75, Copper: 40, money: 2500 }, 
         desc: "[Passive] Crystal Resonance: Mining Quartz stacks up to 10 charges (+0.02x luck each). [Active] Quartz Overload (Chargeable): 2x speed, +2.5x flat luck, and double drops for 10s. [Active] Prism Burst (1/80): Shatters 15 blocks with high-luck variant rolls.", 
         luckMod: 1.05,
-        procBoost: 0.15, // 15% pick proc boost
+        procBoost: 0.00, // 15% pick proc boost
         abilities: [
             { type: "crystal_resonance", name: "Crystal Resonance" },
             { type: "quartz_overload", name: "Quartz Overload", maxCharge: 200 },
@@ -722,7 +722,7 @@ const pickaxeDefinitions = [
 const gearsDefinitions = [
     { id: "speedCoil", name: "Speedy Coil", cost: 1000, req: { Copper: 20 }, desc: "Reduces mining speed interval by 100ms." },
     { id: "flashGrenade", name: "Flash Grenade", cost: 2500, req: { Quartz: 50 }, desc: "Every 2nd block mined has a 1/5 chance to activate a Flash Bomb, mining 30 ores with 0.5x luck, but duplicating ores with a rarity below 100. Does not duplicate layer blocks." },
-    { id: "precisionLens", name: "Precision Lens", cost: 4000, req: { Iron: 40 }, desc: "Gear Proc Boost: Increases all ability proc rates by 12%.", procBoost: 0.12 }
+    { id: "precisionLens", name: "Precision Lens", cost: 4000, req: { Iron: 40, Copper: 25}, desc: "Increases all ability proc rates by 7%.", procBoost: 0.07 }
 ];
 
 let gearSlots = 3;
