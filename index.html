@@ -1272,7 +1272,7 @@ function handleMine(isManualClick = false) {
     renderBulkResult(result, pDef ? pDef.name : "Hand Pick");
 
     if (gears.flashGrenade && (blocksMined % 2 === 0)) {
-        if (Math.random() < 0.2) {
+        if (Math.random() < 0.1) {
             let flashRes = bulkMine(30, 0.5, true);
             renderBulkResult(flashRes, "Flash Bomb Proc!");
             showNotification("💣 Flash Bomb Activated! (+30 ores)");
