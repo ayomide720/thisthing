@@ -317,20 +317,37 @@
     .inv-variants-panel { display: none; background: rgba(0,0,0,0.25); border-radius: 6px; padding: 8px; margin-top: 6px; font-size: 0.75rem; }
     .variant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 
-    #notification {
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--btn-hover);
-        color: var(--text-main);
-        border: 1px solid var(--accent-blue);
-        padding: 10px 20px;
-        border-radius: 30px;
-        font-size: 0.875rem;
-        display: none;
-        z-index: 999;
-    }
+#notification-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column-reverse; /* Newest notifications stack upwards */
+    gap: 8px;
+    z-index: 999;
+    align-items: center;
+    pointer-events: none; /* Let clicks pass through */
+}
+
+/* Individual notification bubble style */
+.notification-bubble {
+    background: var(--btn-hover);
+    color: var(--text-main);
+    border: 1px solid var(--accent-blue);
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 0.875rem;
+    opacity: 1;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: auto;
+}
+
+/* Class applied just before removal to trigger the fade-out */
+.notification-bubble.fade-out {
+    opacity: 0;
+    transform: translateY(10px);
+}
 
     .craft-card {
         background: rgba(0,0,0,0.2);
@@ -670,8 +687,8 @@ const pickaxeDefinitions = [
         luckMod: 1.0,
         abilities: [
             { type: "iron_spirit", name: "Iron Spirit" },
-            { type: "active_burst", proc: 1/120, count: 25, forcedLuck: 1.1, name: "Vein Shatter" },
-            { type: "click_warrior", chance: 0.01, count: 10, name: "Click Warrior" }
+            { type: "active_burst", proc: 1/75, count: 35, forcedLuck: 1.15, name: "Vein Shatter" },
+            { type: "click_warrior", chance: 0.1, count: 20, name: "Click Warrior" }
         ]
     },
     { 
@@ -693,6 +710,35 @@ const gearsDefinitions = [
     { id: "flashGrenade", name: "Flash Grenade", cost: 2500, req: { Quartz: 50 }, desc: "Every 2nd block mined has a 1/5 chance to activate a Flash Bomb, mining 30 ores with 0.5x luck, but duplicating ores with a rarity below 100. Does not duplicate layer blocks." }
 ];
 
+    let gearSlots = 3; // Starting cap
+const maxGearLimit = 12;
+
+// Add this to your save/load functions
+function saveGameData() {
+    // ... existing saves ...
+    localStorage.setItem("mining_gearSlots", gearSlots);
+}
+
+function loadGameData() {
+    // ... existing saves ...
+    const savedSlots = localStorage.getItem("mining_gearSlots");
+    if (savedSlots) gearSlots = Number(savedSlots);
+}
+
+let gearSlots = 3; // Starting cap
+const maxGearLimit = 12;
+
+// Add this to your save/load functions
+function saveGameData() {
+    // ... existing saves ...
+    localStorage.setItem("mining_gearSlots", gearSlots);
+}
+
+function loadGameData() {
+    // ... existing saves ...
+    const savedSlots = localStorage.getItem("mining_gearSlots");
+    if (savedSlots) gearSlots = Number(savedSlots);
+}
 let gears = {
     speedCoil: false,
     flashGrenade: false
@@ -1163,12 +1209,27 @@ function updatePickaxeInfo() {
 }
 
 function showNotification(msg) {
-    const notification = document.getElementById("notification");
+    const container = document.getElementById("notification-container");
+    
+    // Create the notification element
+    const notification = document.createElement("div");
+    notification.className = "notification-bubble";
     notification.textContent = msg;
-    notification.style.display = "block";
-    setTimeout(() => { notification.style.display = "none"; }, 2000);
+    
+    // Append it to the stack container
+    container.appendChild(notification);
+    
+    // Start the fade-out process after 2 seconds
+    setTimeout(() => {
+        notification.classList.add("fade-out");
+        
+        // Remove the element completely after the CSS transition ends (0.5s)
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    }, 2000);
 }
-
+    
 function handleMine(isManualClick = false) {
     let req = layerRequirements[currentLayer] || 0;
     if (blocksMined < req) {
@@ -1336,30 +1397,81 @@ function renderGears() {
     const container = document.getElementById("gearsListContainer");
     container.innerHTML = "";
 
+    // Count currently active gears
+    let activeGearCount = Object.values(gears).filter(Boolean).length;
+
+    // Slot Upgrade Card
+    if (gearSlots < maxGearLimit) {
+        let slotCost = getNextSlotCost();
+        const upgradeCard = document.createElement("div");
+        upgradeCard.className = "craft-card";
+        upgradeCard.style.borderColor = "var(--accent-gold)";
+        upgradeCard.innerHTML = `
+            <b>Gear Slot Capacity (${gearSlots}/${maxGearLimit})</b>
+            <div style="font-size:0.8125rem; color:var(--text-muted); margin:4px 0;">Unlock an extra slot to equip more gear simultaneously.</div>
+            <div style="font-size:0.75rem; margin-bottom:8px;">Cost: $${slotCost.toLocaleString()}</div>
+            <button class="nav-btn" onclick="buyGearSlot()">Expand Slot</button>
+        `;
+        container.appendChild(upgradeCard);
+    }
+
+    // Status Header showing current usage
+    const statusDiv = document.createElement("div");
+    statusDiv.style.cssText = "font-size:0.875rem; margin-bottom:12px; color:var(--accent-blue); text-align:center;";
+    statusDiv.textContent = `Equipped Gears: ${activeGearCount} / ${gearSlots}`;
+    container.appendChild(statusDiv);
+
+    // Render individual gears... (keep existing loop for gearsDefinitions)
     gearsDefinitions.forEach(g => {
         const isCrafted = gears[g.id];
         const card = document.createElement("div");
         card.className = "craft-card";
-
-        let reqList = [`Cost: $${g.cost.toLocaleString()}`];
-        let canCraft = money >= g.cost;
-
-        for (let item in g.req) {
-            let hasCount = inventory[item]?.count || 0;
-            if (hasCount < g.req[item]) canCraft = false;
-            reqList.push(`${item}: ${hasCount} / ${g.req[item]}`);
-        }
-
-        card.innerHTML = `
-            <b>${g.name}</b>
-            <div style="font-size:0.8125rem; color:var(--text-muted); margin:4px 0;">${g.desc}</div>
-            <div style="font-size:0.75rem; margin-bottom:8px;">${reqList.join(" | ")}</div>
-            <button class="nav-btn" ${isCrafted ? "disabled" : ""} onclick="craftGear('${g.id}')">
-                ${isCrafted ? "Active" : "Craft Gear"}
-            </button>
-        `;
-        container.appendChild(card);
+        // ... rest of your gear card code ...
     });
+}
+
+function buyGearSlot() {
+    if (gearSlots >= maxGearLimit) return showNotification("Maximum gear cap reached!");
+    let cost = getNextSlotCost();
+    if (money < cost) return showNotification("Not enough money for a new slot!");
+
+    money -= cost;
+    gearSlots++;
+    
+    moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
+    renderGears();
+    saveData();
+    showNotification(`Successfully unlocked Gear Slot ${gearSlots}!`);
+}
+
+function craftGear(id) {
+    const g = gearsDefinitions.find(item => item.id === id);
+    if (!g || gears[id]) return;
+
+    // Count currently active gears
+    let activeGearCount = Object.values(gears).filter(Boolean).length;
+    if (activeGearCount >= gearSlots) {
+        return showNotification(`Gear slot limit reached (${gearSlots}). Buy more slots to equip this!`);
+    }
+
+    if (money < g.cost) return showNotification("Not enough money!");
+    for (let item in g.req) {
+        if ((inventory[item]?.count || 0) < g.req[item]) return showNotification(`Missing ${item}!`);
+    }
+
+    money -= g.cost;
+    for (let item in g.req) {
+        inventory[item].count -= g.req[item];
+    }
+
+    gears[id] = true;
+    renderGears();
+    updateSpeedDisplay();
+    luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
+    moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
+    renderInventory();
+    saveData();
+    showNotification(`Crafted ${g.name}!`);
 }
 
 function craftGear(id) {
