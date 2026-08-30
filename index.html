@@ -37,15 +37,55 @@
         padding: 20px;
     }
 
+    .main-wrapper {
+        display: flex;
+        gap: 20px;
+        width: 100%;
+        max-width: 960px;
+        align-items: flex-start;
+    }
+
     .container {
         background: var(--card-bg);
         border: 1px solid var(--card-border);
         border-radius: 16px;
-        width: 100%;
-        max-width: 480px;
+        flex: 1;
+        min-width: 0;
         padding: 24px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         position: relative;
+    }
+
+    /* Side Panel for Persistent Inventory */
+    .inventory-sidebar {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        width: 360px;
+        padding: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        max-height: 85vh;
+    }
+
+    .inventory-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    .inventory-header h2 {
+        font-size: 1.125rem;
+    }
+
+    .inventory-scroll {
+        overflow-y: auto;
+        flex: 1;
+        padding-right: 4px;
     }
 
     /* Top Nav Buttons */
@@ -302,7 +342,7 @@
         font-size: 0.875rem;
     }
 
-    /* Tables */
+    /* Tables & Inventory List */
     table {
         width: 100%;
         border-collapse: collapse;
@@ -319,6 +359,45 @@
     th {
         color: var(--text-muted);
         font-weight: 600;
+    }
+
+    .inv-item {
+        border-bottom: 1px solid var(--card-border);
+        padding: 8px 0;
+    }
+
+    .inv-item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .inv-item-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .inv-item-count {
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    .inv-variants-panel {
+        display: none;
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 6px;
+        padding: 8px;
+        margin-top: 6px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .variant-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
     }
 
     /* Progress bar */
@@ -356,6 +435,18 @@
         z-index: 999;
     }
 
+    /* Responsive adjustment for screens < 820px */
+    @media (max-width: 820px) {
+        .main-wrapper {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .inventory-sidebar {
+            width: 100%;
+            max-height: 300px;
+        }
+    }
+
     /* Rare Colors */
     .gold { color: var(--accent-gold); font-weight: bold; }
     .silver { color: #cbd5e1; font-weight: bold; }
@@ -378,155 +469,148 @@
 </head>
 <body>
 
-<div class="container">
-    <!-- Navigation -->
-    <div class="nav-bar">
-        <button class="nav-btn" id="inventoryToggle">Inventory</button>
-        <button class="nav-btn" id="blacksmithToggle">Blacksmith</button>
-        <button class="nav-btn" id="gearsToggle">Gears</button>
-    </div>
-
-    <!-- Inventory Modal -->
-    <div id="inventoryPanel" class="panel">
-        <div class="panel-header">
-            <h2>Inventory</h2>
-            <button class="close-btn" id="closeInventory">Close</button>
+<div class="main-wrapper">
+    <!-- Center Mining Interface -->
+    <div class="container">
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <button class="nav-btn" id="blacksmithToggle">Blacksmith</button>
+            <button class="nav-btn" id="gearsToggle">Gears</button>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Ore</th>
-                    <th style="text-align:right;">Count</th>
-                    <th>Variants</th>
-                </tr>
-            </thead>
-            <tbody id="inventoryTableBody"></tbody>
-        </table>
-    </div>
 
-    <!-- Blacksmith Modal -->
-    <div id="blacksmithPanel" class="panel">
-        <div class="panel-header">
-            <h2>Blacksmith</h2>
-            <button class="close-btn" id="closeBlacksmith">Close</button>
-        </div>
-        <div>
-            <b>Stone Pickaxe Recipe</b>
-            <div id="stonePickaxeProgressLabel" style="font-size:0.875rem; color: var(--text-muted); margin-top:4px;"></div>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="stonePickaxeProgressBar"></div>
+        <!-- Blacksmith Modal -->
+        <div id="blacksmithPanel" class="panel">
+            <div class="panel-header">
+                <h2>Blacksmith</h2>
+                <button class="close-btn" id="closeBlacksmith">Close</button>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Owned</th>
-                        <th>Needed</th>
-                        <th>%</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Stone</td>
-                        <td id="stoneOwned"></td>
-                        <td>100</td>
-                        <td id="stonePercent"></td>
-                    </tr>
-                    <tr>
-                        <td>Copper</td>
-                        <td id="copperOwned"></td>
-                        <td>50</td>
-                        <td id="copperPercent"></td>
-                    </tr>
-                    <tr>
-                        <td>Money</td>
-                        <td id="moneyOwned"></td>
-                        <td>500</td>
-                        <td id="moneyPercent"></td>
-                    </tr>
-                </tbody>
-            </table>
-            <button class="nav-btn" id="buyStonePickaxeBlacksmith" style="margin-top:16px; width:100%;">Craft Stone Pickaxe</button>
-            <div id="blacksmithPickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-top:8px;"></div>
-        </div>
-    </div>
-
-    <!-- Gears Modal -->
-    <div id="gearsPanel" class="panel">
-        <div class="panel-header">
-            <h2>Gears</h2>
-            <button class="close-btn" id="closeGears">Close</button>
-        </div>
-        <div>
-            <b>Speed Coil</b>
-            <div id="speedCoilStatus" style="font-size:0.875rem; color: var(--text-muted); margin: 4px 0;"></div>
-            <div style="font-size:0.875rem; margin-bottom: 8px;">Cost: $1,000</div>
-            <button class="nav-btn" id="craftSpeedCoil" style="width:100%;">Craft Speed Coil</button>
-            <div id="speedCoilInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-top:8px;">Reduces mining interval by 10ms.</div>
-        </div>
-    </div>
-
-    <!-- Main Header -->
-    <div class="header">
-        <h1>⛏️ Mining Simulator</h1>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Balance</div>
-                <div class="stat-value" id="money">$0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Blocks Mined</div>
-                <div class="stat-value" id="blocksMined">0</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Controls -->
-    <div class="controls-panel">
-        <div class="control-row">
-            <label for="luckInput" style="font-weight:600;">Luck Multiplier</label>
             <div>
-                <input id="luckInput" type="number" min="1" step="0.01" value="1">
-                <span class="badge" id="luckDisplay">1x</span>
+                <b>Stone Pickaxe Recipe</b>
+                <div id="stonePickaxeProgressLabel" style="font-size:0.875rem; color: var(--text-muted); margin-top:4px;"></div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="stonePickaxeProgressBar"></div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Owned</th>
+                            <th>Needed</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Stone</td>
+                            <td id="stoneOwned"></td>
+                            <td>100</td>
+                            <td id="stonePercent"></td>
+                        </tr>
+                        <tr>
+                            <td>Copper</td>
+                            <td id="copperOwned"></td>
+                            <td>50</td>
+                            <td id="copperPercent"></td>
+                        </tr>
+                        <tr>
+                            <td>Money</td>
+                            <td id="moneyOwned"></td>
+                            <td>500</td>
+                            <td id="moneyPercent"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="nav-btn" id="buyStonePickaxeBlacksmith" style="margin-top:16px; width:100%;">Craft Stone Pickaxe</button>
+                <div id="blacksmithPickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-top:8px;"></div>
             </div>
         </div>
-        <div class="control-row">
-            <span style="font-weight:600;">Mining Speed</span>
-            <span class="badge" id="speedDisplay">50ms</span>
+
+        <!-- Gears Modal -->
+        <div id="gearsPanel" class="panel">
+            <div class="panel-header">
+                <h2>Gears</h2>
+                <button class="close-btn" id="closeGears">Close</button>
+            </div>
+            <div>
+                <b>Speed Coil</b>
+                <div id="speedCoilStatus" style="font-size:0.875rem; color: var(--text-muted); margin: 4px 0;"></div>
+                <div style="font-size:0.875rem; margin-bottom: 8px;">Cost: $1,000</div>
+                <button class="nav-btn" id="craftSpeedCoil" style="width:100%;">Craft Speed Coil</button>
+                <div id="speedCoilInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-top:8px;">Reduces mining interval by 10ms.</div>
+            </div>
         </div>
+
+        <!-- Main Header -->
+        <div class="header">
+            <h1>⛏️ Mining Simulator</h1>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Balance</div>
+                    <div class="stat-value" id="money">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Blocks Mined</div>
+                    <div class="stat-value" id="blocksMined">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-panel">
+            <div class="control-row">
+                <label for="luckInput" style="font-weight:600;">Luck Multiplier</label>
+                <div>
+                    <input id="luckInput" type="number" min="1" step="0.01" value="1">
+                    <span class="badge" id="luckDisplay">1x</span>
+                </div>
+            </div>
+            <div class="control-row">
+                <span style="font-weight:600;">Mining Speed</span>
+                <span class="badge" id="speedDisplay">50ms</span>
+            </div>
+        </div>
+
+        <div id="pickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-bottom: 12px; text-align: center;"></div>
+
+        <select id="layerSelect" style="margin-bottom:12px;">
+            <option value="1">Layer 1 (Normal)</option>
+            <option value="2">Layer 2 (Lava Layer)</option>
+            <option value="3">Basalt Layer</option>
+        </select>
+
+        <div class="control-row" style="margin-bottom: 6px;">
+            <label for="oreInfoSelect" style="font-size:0.75rem; color: var(--text-muted); text-transform:uppercase;">Ore Index</label>
+        </div>
+        <select id="oreInfoSelect" style="margin-bottom:12px;"></select>
+        
+        <div id="oreInfoBox"></div>
+
+        <div id="leaderboardBox">
+            <b>Rarest Ore Leaderboard</b>
+            <ol id="leaderboardList"></ol>
+        </div>
+
+        <!-- Main Actions -->
+        <div class="action-row">
+            <button class="action-btn" id="mineBtn">Mine 1x</button>
+            <button class="action-btn" id="autoBtn">Auto Mine</button>
+            <button class="action-btn" id="clearBtn">Clear</button>
+        </div>
+
+        <!-- Output Display -->
+        <div id="output"></div>
+
+        <div id="notification">Notification message</div>
     </div>
 
-    <div id="pickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-bottom: 12px; text-align: center;"></div>
-
-    <select id="layerSelect" style="margin-bottom:12px;">
-        <option value="1">Layer 1 (Normal)</option>
-        <option value="2">Layer 2 (Lava Layer)</option>
-        <option value="3">Basalt Layer</option>
-    </select>
-
-    <div class="control-row" style="margin-bottom: 6px;">
-        <label for="oreInfoSelect" style="font-size:0.75rem; color: var(--text-muted); text-transform:uppercase;">Ore Index</label>
+    <!-- Always Visible Inventory Sidebar -->
+    <div class="inventory-sidebar">
+        <div class="inventory-header">
+            <h2>📦 Inventory</h2>
+            <button class="close-btn" id="expandAllVariantsBtn" style="font-size:0.75rem;">Toggle Variants</button>
+        </div>
+        <div class="inventory-scroll" id="inventoryList"></div>
     </div>
-    <select id="oreInfoSelect" style="margin-bottom:12px;"></select>
-    
-    <div id="oreInfoBox"></div>
-
-    <div id="leaderboardBox">
-        <b>Rarest Ore Leaderboard</b>
-        <ol id="leaderboardList"></ol>
-    </div>
-
-    <!-- Main Actions -->
-    <div class="action-row">
-        <button class="action-btn" id="mineBtn">Mine 1x</button>
-        <button class="action-btn" id="autoBtn">Auto Mine</button>
-        <button class="action-btn" id="clearBtn">Clear</button>
-    </div>
-
-    <!-- Output Display -->
-    <div id="output"></div>
-
-    <div id="notification">Notification message</div>
 </div>
 
 <script>
@@ -648,6 +732,7 @@ const variants = [
 ];
 
 let gears = { speedCoil: false };
+let variantToggles = {};
 
 function saveData() {
     localStorage.setItem("mining_leaderboard", JSON.stringify(leaderboard));
@@ -867,23 +952,65 @@ function updateInventory(oreName, variantsArr) {
     saveData();
 }
 
+// Collapsible Side-Panel Inventory Logic
+function toggleVariantView(oreName) {
+    variantToggles[oreName] = !variantToggles[oreName];
+    const panel = document.getElementById(`variants-${oreName}`);
+    if (panel) {
+        panel.style.display = variantToggles[oreName] ? "block" : "none";
+    }
+}
+
+document.getElementById("expandAllVariantsBtn").onclick = () => {
+    const keys = Object.keys(inventory);
+    if (keys.length === 0) return;
+    const allOpen = keys.every(k => variantToggles[k]);
+    keys.forEach(k => {
+        variantToggles[k] = !allOpen;
+    });
+    renderInventory();
+};
+
 function renderInventory() {
-    const tbody = document.getElementById("inventoryTableBody");
-    tbody.innerHTML = "";
-    Object.keys(inventory).sort().forEach(name => {
+    const container = document.getElementById("inventoryList");
+    container.innerHTML = "";
+
+    const keys = Object.keys(inventory).sort();
+    if (keys.length === 0) {
+        container.innerHTML = "<div style='color:var(--text-muted); font-size:0.875rem; text-align:center; padding: 20px 0;'>No ores collected.</div>";
+        return;
+    }
+
+    keys.forEach(name => {
         const info = getOreInfo(name);
         if (!info) return;
-        const v = inventory[name].variants;
-        const variantStr = `Au:${v.gold} Ag:${v.silver} Ion:${v.ionized} Qnt:${v.quantum}`;
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="rarity-${info.tier.toLowerCase()}">${name}</td>
-                        <td style="text-align:right; font-weight:bold;">${inventory[name].count}</td>
-                        <td style="font-size:0.75rem; color:var(--text-muted);">${variantStr}</td>`;
-        tbody.appendChild(tr);
+        const data = inventory[name];
+        const v = data.variants;
+        const isOpen = !!variantToggles[name];
+
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "inv-item";
+
+        itemDiv.innerHTML = `
+            <div class="inv-item-row" onclick="toggleVariantView('${name}')">
+                <span class="inv-item-name rarity-${info.tier.toLowerCase()}">${name}</span>
+                <div>
+                    <span class="inv-item-count">${data.count.toLocaleString()}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 4px;">${isOpen ? '▲' : '▼'}</span>
+                </div>
+            </div>
+            <div class="inv-variants-panel" id="variants-${name}" style="display: ${isOpen ? 'block' : 'none'};">
+                <div class="variant-grid">
+                    <div>Plain: <b>${v.plain}</b></div>
+                    <div class="gold">Gold: <b>${v.gold}</b></div>
+                    <div class="silver">Silver: <b>${v.silver}</b></div>
+                    <div class="ionized">Ionized: <b>${v.ionized}</b></div>
+                    <div class="quantum">Quantum: <b>${v.quantum}</b></div>
+                </div>
+            </div>
+        `;
+        container.appendChild(itemDiv);
     });
-    if (Object.keys(inventory).length === 0) {
-        tbody.innerHTML = "<tr><td colspan='3' style='color:var(--text-muted); text-align:center;'>No ores mined yet.</td></tr>";
-    }
 }
 
 let miningSpeed = 50;
@@ -965,13 +1092,6 @@ document.getElementById("autoBtn").onclick = () => {
 document.getElementById("clearBtn").onclick = () => {
     output.innerHTML = "";
 };
-
-const inventoryToggle = document.getElementById("inventoryToggle");
-const inventoryPanel = document.getElementById("inventoryPanel");
-const closeInventory = document.getElementById("closeInventory");
-
-inventoryToggle.onclick = () => { inventoryPanel.style.display = "block"; };
-closeInventory.onclick = () => { inventoryPanel.style.display = "none"; };
 
 const blacksmithToggle = document.getElementById("blacksmithToggle");
 const blacksmithPanel = document.getElementById("blacksmithPanel");
