@@ -853,27 +853,22 @@ function rollVariants() {
     return {rolled, mult};
 }
 
-// Bulk Mining Engine for High-Performance Multi-Block Drops
-if (pickaxe === "t2_quartz") {
-            if (selectedOre.name === "Quartz") {
-                crystalResonanceCharges = Math.min(10, crystalResonanceCharges + 1);
-                if (resonanceTimer) clearTimeout(resonanceTimer);
-                resonanceTimer = setTimeout(() => {
-                    crystalResonanceCharges = 0;
-                    luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
-                }, 4000); // Decays after 4 seconds of not mining quartz
-            }
+function triggerQuartzOverload() {
+    quartzOverloadActive = true;
+    showNotification("💎 QUARTZ OVERLOAD ACTIVATED! 2x Speed & +2.5x Flat Luck!");
+    updateSpeedDisplay();
+    luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
 
-            // Charge progress for Quartz Overload (fills every 200 blocks)
-            if (!quartzOverloadActive) {
-                quartzChargeProgress++;
-                if (quartzChargeProgress >= 200) {
-                    quartzChargeProgress = 0;
-                    triggerQuartzOverload();
-                }
-            }
-        }
+    if (quartzOverloadTimer) clearTimeout(quartzOverloadTimer);
+    quartzOverloadTimer = setTimeout(() => {
+        quartzOverloadActive = false;
+        showNotification("Quartz Overload ended.");
+        updateSpeedDisplay();
+        luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
+    }, 10000); // Lasts 10 seconds
+}
 
+function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
     let oreList;
     if (currentLayer == 2) oreList = [lavaLayerBlock, ...lavaOres];
     else if (currentLayer == 3) oreList = basaltOres;
@@ -901,6 +896,26 @@ if (pickaxe === "t2_quartz") {
             selectedOre = oreList.find(o => o.chance === 0) || oreList[0];
         }
 
+        // Quartz Crusher mechanics integrated inside the loop
+        if (pickaxe === "t2_quartz") {
+            if (selectedOre.name === "Quartz") {
+                crystalResonanceCharges = Math.min(10, crystalResonanceCharges + 1);
+                if (resonanceTimer) clearTimeout(resonanceTimer);
+                resonanceTimer = setTimeout(() => {
+                    crystalResonanceCharges = 0;
+                    luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
+                }, 4000);
+            }
+
+            if (!quartzOverloadActive) {
+                quartzChargeProgress++;
+                if (quartzChargeProgress >= 200) {
+                    quartzChargeProgress = 0;
+                    triggerQuartzOverload();
+                }
+            }
+        }
+
         if (pickaxe === "t2_iron" && selectedOre.name === "Iron") {
             const tempVariants = rollVariants();
             triggerIronSpirit(tempVariants.rolled.length > 0);
@@ -925,7 +940,6 @@ if (pickaxe === "t2_quartz") {
             rarestRolled = selectedOre;
         }
 
-        // Inventory aggregate
         if (!inventory[selectedOre.name]) {
             inventory[selectedOre.name] = {count:0, variants:{plain:0,gold:0,silver:0,ionized:0,quantum:0}};
         }
@@ -1295,21 +1309,6 @@ function craftPickaxe(id) {
     renderBlacksmith();
     saveData();
     showNotification(`Crafted ${p.name}!`);
-}
-
-    function triggerQuartzOverload() {
-    quartzOverloadActive = true;
-    showNotification("💎 QUARTZ OVERLOAD ACTIVATED! 2x Speed & +2.5x Flat Luck!");
-    updateSpeedDisplay();
-    luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
-
-    if (quartzOverloadTimer) clearTimeout(quartzOverloadTimer);
-    quartzOverloadTimer = setTimeout(() => {
-        quartzOverloadActive = false;
-        showNotification("Quartz Overload ended.");
-        updateSpeedDisplay();
-        luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
-    }, 10000); // Lasts 10 seconds
 }
 
 // Render Gears Workbench UI
