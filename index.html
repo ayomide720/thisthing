@@ -673,6 +673,18 @@ const pickaxeDefinitions = [
             { type: "active_burst", proc: 1/120, count: 25, forcedLuck: 1.1, name: "Vein Shatter" },
             { type: "click_warrior", chance: 0.01, count: 10, name: "Click Warrior" }
         ]
+    },
+    { 
+        id: "t2_quartz", 
+        name: "T2: Quartz Crusher", 
+        req: { Quartz: 75, Copper: 40, money: 2500 }, 
+        desc: "[Passive] Crystal Resonance: Mining Quartz stacks up to 10 charges (+0.02x luck each). [Active] Quartz Overload (Chargeable): 2x speed, +2.5x flat luck, and double drops for 10s. [Active] Prism Burst (1/80): Shatters 15 blocks with high-luck variant rolls.", 
+        luckMod: 1.05,
+        abilities: [
+            { type: "crystal_resonance", name: "Crystal Resonance" },
+            { type: "quartz_overload", name: "Quartz Overload", maxCharge: 200 },
+            { type: "active_burst", proc: 1/80, count: 15, name: "Prism Burst" }
+        ]
     }
 ];
 
@@ -688,6 +700,12 @@ let gears = {
 
 let ironSpiritBonus = 0;
 let ironSpiritTimer = null;
+let crystalResonanceCharges = 0;
+let resonanceTimer = null;
+
+let quartzOverloadActive = false;
+let quartzOverloadTimer = null;
+let quartzChargeProgress = 0;
 
 let variantToggles = {};
 
@@ -836,13 +854,25 @@ function rollVariants() {
 }
 
 // Bulk Mining Engine for High-Performance Multi-Block Drops
-function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
-    let req = layerRequirements[currentLayer] || 0;
-    if (blocksMined < req) {
-        currentLayer = 1;
-        document.getElementById("layerSelect").value = 1;
-        fillOreDropdown(1);
-    }
+if (pickaxe === "t2_quartz") {
+            if (selectedOre.name === "Quartz") {
+                crystalResonanceCharges = Math.min(10, crystalResonanceCharges + 1);
+                if (resonanceTimer) clearTimeout(resonanceTimer);
+                resonanceTimer = setTimeout(() => {
+                    crystalResonanceCharges = 0;
+                    luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
+                }, 4000); // Decays after 4 seconds of not mining quartz
+            }
+
+            // Charge progress for Quartz Overload (fills every 200 blocks)
+            if (!quartzOverloadActive) {
+                quartzChargeProgress++;
+                if (quartzChargeProgress >= 200) {
+                    quartzChargeProgress = 0;
+                    triggerQuartzOverload();
+                }
+            }
+        }
 
     let oreList;
     if (currentLayer == 2) oreList = [lavaLayerBlock, ...lavaOres];
@@ -1055,6 +1085,7 @@ let baseMiningSpeed = 200;
 function getEffectiveMiningSpeed() {
     let speed = baseMiningSpeed;
     if (gears.speedCoil) speed -= 100;
+    if (quartzOverloadActive) speed = Math.floor(speed / 2); // 2x speed boost
     return Math.max(5, speed);
 }
 
@@ -1062,6 +1093,14 @@ function getEffectiveLuck() {
     let l = luck;
     if (pickaxe === "t2_iron") {
         l += ironSpiritBonus;
+    }
+
+    if (pickaxe === "t2_quartz") {
+        l += 0.05; // Base passive modifier (+1.05x total)
+        l += (crystalResonanceCharges * 0.02); // Crystal Resonance stack
+        if (quartzOverloadActive) {
+            l = 2.5; // Flat override during Overload
+        }
     }
 
     let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
@@ -1256,6 +1295,21 @@ function craftPickaxe(id) {
     renderBlacksmith();
     saveData();
     showNotification(`Crafted ${p.name}!`);
+}
+
+    function triggerQuartzOverload() {
+    quartzOverloadActive = true;
+    showNotification("💎 QUARTZ OVERLOAD ACTIVATED! 2x Speed & +2.5x Flat Luck!");
+    updateSpeedDisplay();
+    luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
+
+    if (quartzOverloadTimer) clearTimeout(quartzOverloadTimer);
+    quartzOverloadTimer = setTimeout(() => {
+        quartzOverloadActive = false;
+        showNotification("Quartz Overload ended.");
+        updateSpeedDisplay();
+        luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
+    }, 10000); // Lasts 10 seconds
 }
 
 // Render Gears Workbench UI
