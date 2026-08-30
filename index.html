@@ -495,6 +495,15 @@
     </div>
 </div>
 
+<!-- Draggable Recipe Pin Board -->
+<div id="recipePinBoard" style="display: none; position: fixed; left: 20px; top: 100px; width: 280px; background: var(--card-bg); border: 1px solid var(--accent-blue); border-radius: 12px; padding: 14px; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); user-select: none;">
+    <div id="pinHeader" style="display: flex; justify-content: space-between; align-items: center; cursor: move; margin-bottom: 8px; border-bottom: 1px solid var(--card-border); padding-bottom: 6px;">
+        <b style="font-size: 0.875rem; color: var(--accent-blue);">📌 Pinned Recipe</b>
+        <button onclick="unpinRecipe()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem;">&times;</button>
+    </div>
+    <div id="pinContent" style="font-size: 0.8125rem; display: flex; flex-direction: column; gap: 6px;"></div>
+</div>
+
 <script>
 let currentLayer = 1;
 
@@ -726,6 +735,12 @@ let quartzOverloadTimer = null;
 let quartzChargeProgress = 0;
 
 let variantToggles = {};
+
+// Pinning system variables
+let pinnedRecipe = null;
+let pinPosition = { x: 20, y: 100 };
+let isDraggingPin = false;
+let dragOffset = { x: 0, y: 0 };
 
 function saveData() {
     localStorage.setItem("mining_leaderboard", JSON.stringify(leaderboard));
@@ -1004,6 +1019,7 @@ function renderBulkResult(bulkData, causeTitle) {
 
     renderInventory();
     saveData();
+    if (pinnedRecipe) updatePinBoard();
 }
 
 function getOreInfo(name) {
@@ -1314,9 +1330,12 @@ function renderBlacksmith() {
             <div>${abilitiesHtml}</div>
             <div style="font-size:0.8125rem; color:var(--text-muted); margin:4px 0;">${p.desc}</div>
             <div style="font-size:0.75rem; margin-bottom:8px;">${reqList.join(" | ")}</div>
-            <button class="nav-btn" ${isOwned ? "disabled" : ""} onclick="craftPickaxe('${p.id}')">
-                ${isOwned ? "Equipped" : "Craft & Equip"}
-            </button>
+            <div style="display: flex; gap: 6px;">
+                <button class="nav-btn" ${isOwned ? "disabled" : ""} onclick="craftPickaxe('${p.id}')" style="flex:2;">
+                    ${isOwned ? "Equipped" : "Craft & Equip"}
+                </button>
+                <button class="nav-btn" onclick="pinRecipe('pickaxe', '${p.id}')" style="flex:1; background: var(--btn-bg);">📌 Pin</button>
+            </div>
         `;
         container.appendChild(card);
     });
@@ -1346,6 +1365,7 @@ function craftPickaxe(id) {
     renderInventory();
     renderBlacksmith();
     saveData();
+    if (pinnedRecipe) updatePinBoard();
     showNotification(`Crafted ${p.name}!`);
 }
 
@@ -1404,9 +1424,12 @@ function renderGears() {
             <b>${g.name}</b>
             <div style="font-size:0.8125rem; color:var(--text-muted); margin:4px 0;">${g.desc}</div>
             <div style="font-size:0.75rem; margin-bottom:8px;">${reqList.join(" | ")}</div>
-            <button class="nav-btn" ${isOwned ? "disabled" : ""} onclick="craftGear('${g.id}')">
-                ${isOwned ? "Equipped" : "Craft & Equip"}
-            </button>
+            <div style="display: flex; gap: 6px;">
+                <button class="nav-btn" ${isOwned ? "disabled" : ""} onclick="craftGear('${g.id}')" style="flex:2;">
+                    ${isOwned ? "Equipped" : "Craft & Equip"}
+                </button>
+                <button class="nav-btn" onclick="pinRecipe('gear', '${g.id}')" style="flex:1; background: var(--btn-bg);">📌 Pin</button>
+            </div>
         `;
         container.appendChild(card);
     });
@@ -1457,8 +1480,122 @@ function craftGear(id) {
     moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
     renderInventory();
     saveData();
+    if (pinnedRecipe) updatePinBoard();
     showNotification(`Crafted ${g.name}!`);
 }
+
+// Recipe Pinning System Helpers
+function findOreLayerName(oreName) {
+    if (oreName === "money") return "Cash / Global";
+    if (ores.some(o => o.name === oreName)) return "Layer 1 (Normal)";
+    if (lavaOres.some(o => o.name === oreName)) return "Layer 2 (Lava)";
+    if (basaltOres.some(o => o.name === oreName)) return "Layer 3 (Basalt)";
+    if (crystalOres.some(o => o.name === oreName)) return "Layer 4 (Crystal)";
+    if (quantumOres.some(o => o.name === oreName)) return "Layer 5 (Quantum)";
+    return "Unknown Layer";
+}
+
+function pinRecipe(type, id) {
+    pinnedRecipe = { type, id };
+    document.getElementById("recipePinBoard").style.display = "block";
+    updatePinBoard();
+    showNotification("Recipe pinned to screen!");
+}
+
+function unpinRecipe() {
+    pinnedRecipe = null;
+    document.getElementById("recipePinBoard").style.display = "none";
+}
+
+function updatePinBoard() {
+    if (!pinnedRecipe) return;
+    const content = document.getElementById("pinContent");
+    content.innerHTML = "";
+
+    let itemDef = null;
+    let itemName = "";
+
+    if (pinnedRecipe.type === "pickaxe") {
+        itemDef = pickaxeDefinitions.find(p => p.id === pinnedRecipe.id);
+        itemName = itemDef ? itemDef.name : "";
+    } else if (pinnedRecipe.type === "gear") {
+        itemDef = gearsDefinitions.find(g => g.id === pinnedRecipe.id);
+        itemName = itemDef ? itemDef.name : "";
+    }
+
+    if (!itemDef) {
+        unpinRecipe();
+        return;
+    }
+
+    const titleEl = document.createElement("div");
+    titleEl.innerHTML = `<b>${itemName}</b>`;
+    content.appendChild(titleEl);
+
+    let totalComponents = 0;
+    let completedComponents = 0;
+
+    for (let reqKey in itemDef.req) {
+        totalComponents++;
+        let requiredAmount = itemDef.req[reqKey];
+        let currentAmount = 0;
+
+        if (reqKey === "money") {
+            currentAmount = money;
+        } else {
+            currentAmount = inventory[reqKey]?.count || 0;
+        }
+
+        if (currentAmount >= requiredAmount) {
+            completedComponents++;
+        }
+
+        let percent = Math.min(100, Math.floor((currentAmount / requiredAmount) * 100));
+        let layerLocation = findOreLayerName(reqKey);
+        let colorStyle = currentAmount >= requiredAmount ? "var(--accent-green)" : "var(--text-main)";
+
+        const row = document.createElement("div");
+        row.style.cssText = "background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; border: 1px solid var(--card-border);";
+        row.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                <span style="color: ${colorStyle};">${reqKey}</span>
+                <span>${currentAmount.toLocaleString()} / ${requiredAmount.toLocaleString()}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted);">
+                <span>📍 ${layerLocation}</span>
+                <span>${percent}%</span>
+            </div>
+        `;
+        content.appendChild(row);
+    }
+
+    let overallProgress = Math.floor((completedComponents / totalComponents) * 100);
+    const progressEl = document.createElement("div");
+    progressEl.style.cssText = "margin-top: 4px; font-weight: bold; text-align: center; color: var(--accent-gold); font-size: 0.75rem;";
+    progressEl.textContent = `Overall Progress: ${overallProgress}% Complete`;
+    content.appendChild(progressEl);
+}
+
+// Draggable window implementation for the pinned box
+const pinBoard = document.getElementById("recipePinBoard");
+const pinHeader = document.getElementById("pinHeader");
+
+pinHeader.onmousedown = function(e) {
+    isDraggingPin = true;
+    dragOffset.x = e.clientX - pinBoard.offsetLeft;
+    dragOffset.y = e.clientY - pinBoard.offsetTop;
+    e.preventDefault();
+};
+
+document.onmousemove = function(e) {
+    if (!isDraggingPin) return;
+    pinBoard.style.left = (e.clientX - dragOffset.x) + "px";
+    pinBoard.style.top = (e.clientY - dragOffset.y) + "px";
+};
+
+document.onmouseup = function() {
+    isDraggingPin = false;
+};
 
 fillOreDropdown(currentLayer);
 updatePickaxeInfo();
