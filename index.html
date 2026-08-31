@@ -709,6 +709,17 @@ const pickaxeDefinitions = [
             { type: "quartz_overload", name: "Quartz Overload", maxCharge: 200 },
             { type: "active_burst", proc: 1/80, count: 15, name: "Prism Burst" }
         ]
+    },
+    {
+        id: "t4_magma",
+        name: "T4: Magmatic Scorcher",
+        req: { Iron: 300, Quartz: 250, Magmaite: 120, Volcanite: 80, Cinderite: 60, money: 8000 },
+        desc: "[Passive] Magmatic Volley: Every 10th block mined has a 50% chance (100% during Melting Frenzy) to hurl a magma volley, mining 15 blocks at 1.15x luck (1.35x during Melting Frenzy). [Active] Melting Frenzy: Mining fills your Melt Meter (each ore contributes rarity/10, capped at 500/ore). Reaching the threshold (reduced by Magmatic Volley's proc rate, min 7,500) triggers a 10s boosted state, followed by a 6s cooldown before it can trigger again.",
+        luckMod: 1.0,
+        abilities: [
+            { type: "magmatic_volley", name: "Magmatic Volley", step: 10, baseProc: 0.5, boostedProc: 1.0, count: 15, baseLuck: 1.15, boostedLuck: 1.35 },
+            { type: "melting_frenzy", name: "Melting Frenzy", baseThreshold: 10000, minThreshold: 7500, duration: 10000, cooldown: 6000, meltCapPerOre: 500 }
+        ]
     }
 ];
 
@@ -728,6 +739,10 @@ let gears = {
 let ironSpiritBonus = 0;
 let ironSpiritTimer = null;
 let crystalResonanceCharges = 0;
+let meltMeter = 0;
+let meltFrenzyActive = false;
+let meltFrenzyTimer = null;
+let meltFrenzyCooldownUntil = 0;
 let resonanceTimer = null;
 
 let quartzOverloadActive = false;
@@ -897,8 +912,28 @@ function triggerIronSpirit(isVariant = false) {
     ironSpiritTimer = setTimeout(() => {
         ironSpiritBonus = 0;
         luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
-    }, 4400);
+    }, 3000);
     luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
+}
+
+function getMeltFrenzyThreshold(frenzyAbility, volleyAbility) {
+    let reduction = (volleyAbility ? volleyAbility.baseProc : 0) * frenzyAbility.baseThreshold;
+    return Math.max(frenzyAbility.minThreshold, frenzyAbility.baseThreshold - reduction);
+}
+
+function triggerMeltingFrenzy(frenzyAbility) {
+    meltFrenzyActive = true;
+    meltMeter = 0;
+    showNotification("🌋 Melting Frenzy Active! Magmatic Volley proc rate boosted to 100%!");
+    updatePickaxeInfo();
+
+    if (meltFrenzyTimer) clearTimeout(meltFrenzyTimer);
+    meltFrenzyTimer = setTimeout(() => {
+        meltFrenzyActive = false;
+        meltFrenzyCooldownUntil = Date.now() + frenzyAbility.cooldown;
+        showNotification("Melting Frenzy ended. Cooling down...");
+        updatePickaxeInfo();
+    }, frenzyAbility.duration);
 }
 
 function rollVariants() {
@@ -989,6 +1024,19 @@ function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
         if (pickaxe === "t2_iron" && selectedOre.name === "Iron") {
             const tempVariants = rollVariants();
             triggerIronSpirit(tempVariants.rolled.length > 0);
+        }
+
+        if (pickaxe === "t4_magma" && !meltFrenzyActive) {
+            let pDef = pickaxeDefinitions.find(p => p.id === "t4_magma");
+            let frenzyAbility = pDef.abilities.find(a => a.type === "melting_frenzy");
+            let volleyAbility = pDef.abilities.find(a => a.type === "magmatic_volley");
+            let gain = Math.min(selectedOre.chance / 10, frenzyAbility.meltCapPerOre);
+            meltMeter += gain;
+
+            let threshold = getMeltFrenzyThreshold(frenzyAbility, volleyAbility);
+            if (meltMeter >= threshold && Date.now() >= meltFrenzyCooldownUntil) {
+                triggerMeltingFrenzy(frenzyAbility);
+            }
         }
 
         const {rolled, mult} = rollVariants();
@@ -1287,6 +1335,18 @@ function handleMine(isManualClick = false) {
                     let burstRes = bulkMine(ab.count, forcedLuck);
                     renderBulkResult(burstRes, `${ab.name} Proc!`);
                     showNotification(`💥 ${ab.name} Triggered! (+${ab.count} blocks)`);
+                }
+            }
+
+            if (ab.type === "magmatic_volley") {
+                if (blocksMined % ab.step === 0) {
+                    let procChance = meltFrenzyActive ? ab.boostedProc : ab.baseProc;
+                    if (Math.random() < procChance) {
+                        let forcedLuck = meltFrenzyActive ? ab.boostedLuck : ab.baseLuck;
+                        let volleyRes = bulkMine(ab.count, forcedLuck);
+                        renderBulkResult(volleyRes, `${ab.name} Proc!`);
+                        showNotification(`🌋 ${ab.name} Triggered! (+${ab.count} blocks)`);
+                    }
                 }
             }
         });
