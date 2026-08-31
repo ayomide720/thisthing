@@ -714,10 +714,10 @@ const pickaxeDefinitions = [
         id: "t4_magma",
         name: "T4: Magmatic Scorcher",
         req: { Iron: 300, Quartz: 250, Magmaite: 40, Volcanite: 20, Cinderite: 10, money: 12000 },
-        desc: "[Passive] Magmatic Volley: Every 10th block mined has a 50% chance (100% during Melting Frenzy) to hurl a magma volley, mining 15 blocks at 1.15x luck (1.35x during Melting Frenzy). [Active] Melting Frenzy: Mining fills your Melt Meter (each ore contributes rarity/10, capped at 500/ore). Reaching the threshold (reduced by Magmatic Volley's proc rate, min 7,500) triggers a 10s boosted state, followed by a 6s cooldown before it can trigger again.",
+        desc: "[Passive] Magmatic Volley: Every 10th block mined has a 25% chance (100% during Melting Frenzy) to hurl a magma volley, mining 55 blocks at 1.35x luck (1.75x during Melting Frenzy). [Active] Melting Frenzy: Mining fills your Melt Meter (each ore contributes rarity/10, capped at 500/ore). Reaching the threshold (reduced by Magmatic Volley's proc rate, min 7,500) triggers a 10s boosted state, followed by a 6s cooldown before it can trigger again.",
         luckMod: 1.0,
         abilities: [
-            { type: "magmatic_volley", name: "Magmatic Volley", step: 10, baseProc: 0.5, boostedProc: 1.0, count: 45, baseLuck: 1.15, boostedLuck: 1.35 },
+            { type: "magmatic_volley", name: "Magmatic Volley", step: 10, baseProc: 0.25, boostedProc: 1.0, count: 55, baseLuck: 1.35, boostedLuck: 1.75 },
             { type: "melting_frenzy", name: "Melting Frenzy", baseThreshold: 10000, minThreshold: 5000, duration: 10000, cooldown: 10000, meltCapPerOre: 500 }
         ]
     }
