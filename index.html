@@ -440,10 +440,6 @@
                 <span style="font-weight:600;">Mining Speed</span>
                 <span class="badge" id="speedDisplay">50ms</span>
             </div>
-            <div class="control-row">
-                <span style="font-weight:600;">Proc Boost</span>
-                <span class="badge" id="procBoostDisplay">0%</span>
-            </div>
         </div>
 
         <div id="pickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-bottom: 12px; text-align: center;"></div>
@@ -649,26 +645,26 @@ const crystalOres = [
     {name:"Spectrumite", chance:180000, money:9000, tier:"Surreal"},
     {name:"Radiance Crystal", chance:950000, money:25000, tier:"Mythic"},
     {name:"Celestial Diamond", chance:5000000, money:80000, tier:"Exotic"},
-    {name:"Prisma Astrale", chance:35000000, money:250000, tier:"Exquisite"},
-    {name:"Gem of Supernovae", chance:180000000, money:1000000, tier:"Transcendent"},
-    {name:"Eternal Lunae", chance:1200000000, money:5000000, tier:"Cosmic"},
-    {name:"Empress' Catalyst", chance:8000000000, money:20000000, tier:"Divine"}
+    {name:"Astral Prism", chance:35000000, money:250000, tier:"Exquisite"},
+    {name:"Supernova Gem", chance:180000000, money:1000000, tier:"Transcendent"},
+    {name:"Shard of Light", chance:1200000000, money:5000000, tier:"Cosmic"},
+    {name:"Eternal Catalyst", chance:8000000000, money:20000000, tier:"Divine"}
 ];
 
 const quantumOres = [
-    {name:"Voiderium Matter", chance:0, money:100, tier:"Layer"},
-    {name:"Fluxorium", chance:40, money:200, tier:"Common"},
-    {name:"Darkae", chance:150, money:500, tier:"Common"},
-    {name:"Chronos", chance:1200, money:1500, tier:"Uncommon"},
-    {name:"Etherealism", chance:8000, money:4500, tier:"Rare"},
-    {name:"Genuinium", chance:60000, money:15000, tier:"Master"},
+    {name:"Void Matter", chance:0, money:100, tier:"Layer"},
+    {name:"Flux Particle", chance:40, money:200, tier:"Common"},
+    {name:"Dark Plasma", chance:150, money:500, tier:"Common"},
+    {name:"Chrono Dust", chance:1200, money:1500, tier:"Uncommon"},
+    {name:"Ethereal Node", chance:8000, money:4500, tier:"Rare"},
+    {name:"Singularity Core", chance:60000, money:15000, tier:"Master"},
     {name:"Tachyon Gem", chance:350000, money:50000, tier:"Surreal"},
-    {name:"Celementium", chance:2100000, money:180000, tier:"Mythic"},
-    {name:"Photon Buster", chance:15000000, money:600000, tier:"Exotic"},
+    {name:"Entropy Cluster", chance:2100000, money:180000, tier:"Mythic"},
+    {name:"Cosmic Essence", chance:15000000, money:600000, tier:"Exotic"},
     {name:"Event Horizon", chance:90000000, money:2500000, tier:"Exquisite"},
-    {name:"Coagulation", chance:500000000, money:10000000, tier:"Transcendent"},
-    {name:"Anachronism", chance:3000000000, money:40000000, tier:"Cosmic"},
-    {name:"Omnipresence", chance:10000000000, money:150000000, tier:"Infinite"}
+    {name:"Dimensional Anchor", chance:500000000, money:10000000, tier:"Transcendent"},
+    {name:"Timeless Relic", chance:3000000000, money:40000000, tier:"Cosmic"},
+    {name:"Omnipresent Spark", chance:10000000000, money:150000000, tier:"Infinite"}
 ];
 
 const variants = [
@@ -685,7 +681,6 @@ const pickaxeDefinitions = [
         req: { Stone: 50, Copper: 20, money: 250 }, 
         desc: "[Passive] Double Miner: Every 5th block mines 2 ores. [Active] Surge (1/250): Mines 10 ores instantly.", 
         luckMod: 1.0,
-        procBoost: 0.00, // 5% pick proc boost
         abilities: [
             { type: "passive_step", step: 5, extraBlocks: 1, name: "Double Miner" },
             { type: "active_burst", proc: 1/250, count: 10, name: "Surge" }
@@ -697,7 +692,6 @@ const pickaxeDefinitions = [
         req: { Iron: 100, Quartz: 25, money: 1500 }, 
         desc: "[Passive] Iron Spirit: Stacking luck on mining Iron. [Active] Vein Shatter (1/75): Mines 35 ores with forced 1.15x luck. [Passive] Click Warrior: 10% chance on click to mine 10 ores.", 
         luckMod: 1.0,
-        procBoost: 0.00, // 10% pick proc boost
         abilities: [
             { type: "iron_spirit", name: "Iron Spirit" },
             { type: "active_burst", proc: 1/75, count: 35, forcedLuck: 1.15, name: "Vein Shatter" },
@@ -710,7 +704,6 @@ const pickaxeDefinitions = [
         req: { Quartz: 75, Copper: 40, money: 2500 }, 
         desc: "[Passive] Crystal Resonance: Mining Quartz stacks up to 10 charges (+0.02x luck each). [Active] Quartz Overload (Chargeable): 2x speed, +2.5x flat luck, and double drops for 10s. [Active] Prism Burst (1/80): Shatters 15 blocks with high-luck variant rolls.", 
         luckMod: 1.05,
-        procBoost: 0.00, // 15% pick proc boost
         abilities: [
             { type: "crystal_resonance", name: "Crystal Resonance" },
             { type: "quartz_overload", name: "Quartz Overload", maxCharge: 200 },
@@ -721,8 +714,7 @@ const pickaxeDefinitions = [
 
 const gearsDefinitions = [
     { id: "speedCoil", name: "Speedy Coil", cost: 1000, req: { Copper: 20 }, desc: "Reduces mining speed interval by 100ms." },
-    { id: "flashGrenade", name: "Flash Grenade", cost: 2500, req: { Quartz: 50 }, desc: "Every 2nd block mined has a 1/5 chance to activate a Flash Bomb, mining 30 ores with 0.5x luck, but duplicating ores with a rarity below 100. Does not duplicate layer blocks." },
-    { id: "precisionLens", name: "Precision Lens", cost: 4000, req: { Iron: 40, Copper: 25}, desc: "Increases all ability proc rates by 7%.", procBoost: 0.07 }
+    { id: "flashGrenade", name: "Flash Grenade", cost: 2500, req: { Quartz: 50 }, desc: "Every 2nd block mined has a 1/5 chance to activate a Flash Bomb, mining 30 ores with 0.5x luck, but duplicating ores with a rarity below 100. Does not duplicate layer blocks." }
 ];
 
 let gearSlots = 3;
@@ -730,8 +722,7 @@ const maxGearLimit = 12;
 
 let gears = {
     speedCoil: false,
-    flashGrenade: false,
-    precisionLens: false
+    flashGrenade: false
 };
 
 let ironSpiritBonus = 0;
@@ -790,8 +781,7 @@ function resetData() {
         gearSlots = 3;
         gears = {
             speedCoil: false,
-            flashGrenade: false,
-            precisionLens: false
+            flashGrenade: false
         };
         location.reload();
     }
@@ -851,7 +841,34 @@ oreInfoSelect.onchange = function() {
 
 const lavaLayerBlock = {name:"Lava", chance:0, money:5, tier:"Lava"};
 let autoMining = false;
-let autoInterval = null;
+
+// Web Worker setup to bypass browser throttling in background tabs
+let miningWorker = null;
+function initMiningWorker() {
+    const workerCode = `
+        let timer = null;
+        self.onmessage = function(e) {
+            if (e.data.command === 'start') {
+                if (timer) clearInterval(timer);
+                timer = setInterval(() => {
+                    self.postMessage('tick');
+                }, e.data.interval);
+            } else if (e.data.command === 'stop') {
+                if (timer) clearInterval(timer);
+                timer = null;
+            }
+        };
+    `;
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    miningWorker = new Worker(URL.createObjectURL(blob));
+
+    miningWorker.onmessage = function(e) {
+        if (e.data === 'tick' && autoMining) {
+            handleMine(false);
+        }
+    };
+}
+initMiningWorker();
 
 document.getElementById("layerSelect").onchange = function() {
     let selectedLayer = parseInt(this.value);
@@ -867,8 +884,7 @@ document.getElementById("layerSelect").onchange = function() {
     saveData();
     if(autoMining){
         autoMining = false;
-        clearInterval(autoInterval);
-        autoInterval = null;
+        miningWorker.postMessage({ command: 'stop' });
         document.getElementById("autoBtn").textContent = "Auto Mine";
         document.getElementById("autoBtn").style.background = "var(--accent-gold)";
     }
@@ -907,8 +923,7 @@ function triggerQuartzOverload() {
     luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
 
     if (autoMining) {
-        clearInterval(autoInterval);
-        autoInterval = setInterval(() => handleMine(false), getEffectiveMiningSpeed());
+        miningWorker.postMessage({ command: 'start', interval: getEffectiveMiningSpeed() });
     }
 
     if (quartzOverloadTimer) clearTimeout(quartzOverloadTimer);
@@ -919,8 +934,7 @@ function triggerQuartzOverload() {
         luckDisplay.textContent = `${getEffectiveLuck().toFixed(2)}x`;
 
         if (autoMining) {
-            clearInterval(autoInterval);
-            autoInterval = setInterval(() => handleMine(false), getEffectiveMiningSpeed());
+            miningWorker.postMessage({ command: 'start', interval: getEffectiveMiningSpeed() });
         }
     }, 10000); 
 }
@@ -1183,23 +1197,9 @@ function getEffectiveLuck() {
     return l;
 }
 
-function getEffectiveProcBoost() {
-    let boost = 0;
-    let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
-    if (pDef && pDef.procBoost) boost += pDef.procBoost;
-    
-    gearsDefinitions.forEach(g => {
-        if (gears[g.id] && g.procBoost) boost += g.procBoost;
-    });
-    return Math.min(1.0, boost);
-}
-
 const speedDisplay = document.getElementById("speedDisplay");
-const procBoostDisplay = document.getElementById("procBoostDisplay");
-
 function updateSpeedDisplay() {
     speedDisplay.textContent = `${getEffectiveMiningSpeed()}ms`;
-    procBoostDisplay.textContent = `${(getEffectiveProcBoost() * 100).toFixed(0)}%`;
 }
 
 let luck = 1;
@@ -1272,7 +1272,7 @@ function handleMine(isManualClick = false) {
     renderBulkResult(result, pDef ? pDef.name : "Hand Pick");
 
     if (gears.flashGrenade && (blocksMined % 2 === 0)) {
-        if (Math.random() < 0.1) {
+        if (Math.random() < 0.2) {
             let flashRes = bulkMine(30, 0.5, true);
             renderBulkResult(flashRes, "Flash Bomb Proc!");
             showNotification("💣 Flash Bomb Activated! (+30 ores)");
@@ -1282,12 +1282,7 @@ function handleMine(isManualClick = false) {
     if (pDef && pDef.abilities) {
         pDef.abilities.forEach(ab => {
             if (ab.type === "active_burst") {
-                let origDenom = 1 / ab.proc;
-                let boost = getEffectiveProcBoost();
-                let adjustedDenom = Math.max(1, Math.round(origDenom * (1 - boost)));
-                let effectiveProc = 1 / adjustedDenom;
-
-                if (Math.random() < effectiveProc) {
+                if (Math.random() < ab.proc) {
                     let forcedLuck = ab.forcedLuck !== undefined ? ab.forcedLuck : null;
                     let burstRes = bulkMine(ab.count, forcedLuck);
                     renderBulkResult(burstRes, `${ab.name} Proc!`);
@@ -1306,12 +1301,11 @@ document.getElementById("autoBtn").onclick = () => {
     if(autoMining){
         document.getElementById("autoBtn").textContent = "Stop Auto";
         document.getElementById("autoBtn").style.background = "var(--accent-red)";
-        autoInterval = setInterval(() => handleMine(false), getEffectiveMiningSpeed());
+        miningWorker.postMessage({ command: 'start', interval: getEffectiveMiningSpeed() });
     } else {
         document.getElementById("autoBtn").textContent = "Auto Mine";
         document.getElementById("autoBtn").style.background = "var(--accent-gold)";
-        clearInterval(autoInterval);
-        autoInterval = null;
+        miningWorker.postMessage({ command: 'stop' });
     }
     updateSpeedDisplay();
 };
@@ -1394,7 +1388,6 @@ function craftPickaxe(id) {
     renderInventory();
     renderBlacksmith();
     saveData();
-    updateSpeedDisplay();
     if (pinnedRecipe) updatePinBoard();
     showNotification(`Crafted ${p.name}!`);
 }
