@@ -346,6 +346,79 @@
         transform: translateY(10px);
     }
 
+    #notification-container.stacked {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        left: auto;
+        top: auto;
+        transform: none;
+        flex-direction: column;
+        align-items: stretch;
+        width: 320px;
+        max-width: calc(100vw - 32px);
+        max-height: 260px;
+        overflow-y: auto;
+        background: #090a0f;
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 8px;
+        font-family: monospace;
+        font-size: 0.75rem;
+        gap: 0;
+    }
+
+    .notification-entry {
+        color: var(--text-muted);
+        padding: 3px 4px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        line-height: 1.45;
+        pointer-events: auto;
+        opacity: 1;
+        transition: opacity 0.4s ease;
+    }
+
+    .notification-entry:last-child { border-bottom: none; }
+
+    .notification-entry.fade-out { opacity: 0; }
+
+    .notification-entry .notif-time {
+        color: var(--accent-blue);
+        margin-right: 6px;
+    }
+
+    .settings-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    .settings-toggle-row:last-child { border-bottom: none; }
+
+    .settings-toggle-row label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .settings-toggle-row .settings-desc {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--text-muted);
+    }
+
+    .settings-toggle-row input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--accent-blue);
+        flex-shrink: 0;
+    }
+
     .craft-card {
         background: rgba(0,0,0,0.2);
         border: 1px solid var(--card-border);
@@ -442,6 +515,28 @@
         <div class="nav-bar">
             <button class="nav-btn" id="blacksmithToggle">Blacksmith (Pickaxes)</button>
             <button class="nav-btn" id="gearsToggle">Gears Workbench</button>
+            <button class="nav-btn" id="settingsToggle">⚙️ Settings</button>
+        </div>
+
+        <div id="settingsPanel" class="panel">
+            <div class="panel-header">
+                <h2>Settings</h2>
+                <button class="close-btn" id="closeSettings">Close</button>
+            </div>
+            <div class="settings-toggle-row">
+                <label for="stackNotifsToggle">
+                    Stack Notifications
+                    <span class="settings-desc">Show notifications as a scrolling text log (like the mining log) instead of floating bubbles.</span>
+                </label>
+                <input type="checkbox" id="stackNotifsToggle">
+            </div>
+            <div class="settings-toggle-row">
+                <label for="disableNotifsToggle">
+                    Disable Notifications
+                    <span class="settings-desc">Completely turns off all popup/log notifications. Mining results in the main log are unaffected.</span>
+                </label>
+                <input type="checkbox" id="disableNotifsToggle">
+            </div>
         </div>
 
         <div id="blacksmithPanel" class="panel">
@@ -912,6 +1007,18 @@ const gearsDefinitions = [
             "• [Passive] Flash Trigger: Every 5th block mined has a 1/10 chance to activate a Flash Bomb.",
             "• [Effect] Mines 50 ores with 0.25x luck, duplicating ores with rarity below 100 (excludes layer blocks)."
         ]
+    },
+    {
+        id: "heartbreaker",
+        name: "Heartbreaker",
+        cost: 45000000,
+        req: { Tanzanite: 40, Actinium: 150, "Blinding Light": 900, Selenium: 300, Cryoclase: 500, Marbleite: 3000 },
+        descLines: [
+            "• [Active] Arrow Barrage (1/120): Sends out 4-6 arrows, each with a random effect, over 1.5s. Heartbreak Arrows limited to two per barrage.",
+            "• Lovelace Arrow: Mines 12 blocks with a 2x luck boost.",
+            "• Heartbreak Arrow: Mines 4 blocks with a 6x luck boost, then mines 25-35 blocks over 3s with a 1.2x luck boost.",
+            "• Fairytale Arrow: Mines 10 blocks with a 1.1x luck boost, then mines 12 blocks with a 1.3x luck boost, four times."
+        ]
     }
 ];
 
@@ -946,6 +1053,28 @@ const coilsDefinitions = [
             "• [Buff] Exponential I: Scales active pickaxe abilities based on blocks mined.",
             "• [Buff] Speedy I: Additional mining speed bonus."
         ] 
+    },
+    {
+        id: "singularityCoil",
+        name: "Singularity Coil",
+        cost: 25000000,
+        req: { Iron: 20000, Coal: 30000, Marble: 15000, Freon: 3, Nauticalis: 1, Cybernetium: 1 },
+        descLines: [
+            "• [Passive] +25ms speed, +25% Proc Rate, +1.15x Luck.",
+            "• [Buff] Gravitational II: Mining with a click mines 3 ores instead of 1. (Does not affect \"every Xth ore\" effects)",
+            "• [Passive] Event Horizon: Passively mines 5 ores every second using your pickaxe's base luck."
+        ]
+    },
+    {
+        id: "steampunkCoil",
+        name: "Steampunk Coil",
+        cost: 12500000,
+        req: { Iron: 80000, Coal: 25000, Basalt: 15000, Stone: 15000, Lava: 15000, Freon: 1, Aegistone: 1 },
+        descLines: [
+            "• [Passive] +50ms speed, +25% Proc Rate, +1.05x Luck.",
+            "• [Buff] Steampunk I: Every 10th ore mined increases speed by +5ms. Stacks up to 10 times, each lasting 3s (refreshed +1.5s per new stack).",
+            "• [Passive] Grants the Iron Spirit passive. (Does not stack if Iron Breaker is already equipped)"
+        ]
     }
 ];
 
@@ -953,9 +1082,11 @@ let gearSlots = 3;
 const maxGearLimit = 6;
 const gearSlotCosts = [50000, 5000000, 500000000, 25000000000, 100000000000];
 
-let gears = { flashGrenade: false };
+let gears = { flashGrenade: false, heartbreaker: false };
 let coilsOwned = { speedCoil: false };
 let equippedCoil = null;
+let notificationsEnabled = true;
+let notificationStackMode = true;
 
 let ironSpiritBonus = 0;
 let ironSpiritTimer = null;
@@ -973,6 +1104,9 @@ let quartzChargeProgress = 0;
 let freezeoverActive = false;
 let freezeoverPenaltyActive = false;
 let iceCoilIntervalTimer = null;
+let singularityIntervalTimer = null;
+let steampunkStacks = 0;
+let steampunkTimeout = null;
 
 let icyIIActive = false;
 let icyIITimer = null;
@@ -1001,6 +1135,8 @@ function saveData() {
     localStorage.setItem("mining_equippedCoil", equippedCoil === null ? "" : equippedCoil);
     localStorage.setItem("mining_world", currentWorld);
     localStorage.setItem("mining_layer", currentLayer);
+    localStorage.setItem("mining_notificationsEnabled", notificationsEnabled ? "1" : "0");
+    localStorage.setItem("mining_notifStackMode", notificationStackMode ? "1" : "0");
 }
 
 function loadData() {
@@ -1030,6 +1166,11 @@ function loadData() {
     if (!pickaxeDefinitions.some(p => p.id === pickaxe)) {
         pickaxe = "none";
     }
+
+    const notifEnabledSaved = localStorage.getItem("mining_notificationsEnabled");
+    notificationsEnabled = notifEnabledSaved === null ? true : notifEnabledSaved === "1";
+    const notifStackSaved = localStorage.getItem("mining_notifStackMode");
+    notificationStackMode = notifStackSaved === null ? true : notifStackSaved === "1";
 }
 
 function resetData() {
@@ -1043,8 +1184,13 @@ function resetData() {
         currentWorld = 1;
         currentLayer = 1;
         gearSlots = 3;
-        gears = { flashGrenade: false };
+        gears = { flashGrenade: false, heartbreaker: false };
         coilsOwned = { speedCoil: false };
+        steampunkStacks = 0;
+        if (steampunkTimeout) clearTimeout(steampunkTimeout);
+        if (singularityIntervalTimer) clearInterval(singularityIntervalTimer);
+        notificationsEnabled = true;
+        notificationStackMode = true;
         equippedCoil = null;
         location.reload();
     }
@@ -1331,6 +1477,13 @@ function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
         if (pickaxe === "t2_iron" && selectedOre.name === "Iron") {
             const tempVariants = rollVariants();
             triggerIronSpirit(tempVariants.rolled.length > 0);
+        } else if (equippedCoil === "steampunkCoil" && pickaxe !== "t2_iron" && selectedOre.name === "Iron") {
+            const tempVariants = rollVariants();
+            triggerIronSpirit(tempVariants.rolled.length > 0);
+        }
+
+        if (equippedCoil === "steampunkCoil" && (blocksMined + c + 1) % 10 === 0) {
+            triggerSteampunkStack();
         }
 
         if (pickaxe === "t4_magma" && !meltFrenzyActive) {
@@ -1453,7 +1606,9 @@ function renderLeaderboard() {
         leaderboard.forEach((entry) => {
             const li = document.createElement("li");
             let extraTag = entry.variantMult > 1 ? ` <span style="color:var(--accent-gold); font-size: 0.75rem;">(${entry.variantMult}x Var)</span>` : '';
-            li.innerHTML = `<span class="rarity-${entry.tier.toLowerCase()}">${entry.name}</span>${extraTag} 
+            // Example fix at line 1609
+            const name = (entry && entry.name) ? entry.name.toLowerCase() : "unknown";
+            li.innerHTML = `<span class="rarity-${entry.tier.toLowerCase()}">${name}</span>${extraTag} 
                 <span style="color:var(--text-muted);">[${entry.tier}]</span> 
                 <span style="color:var(--accent-blue);">1/${Math.floor(entry.adjustedChance).toLocaleString()}</span>`;
             list.appendChild(li);
@@ -1591,6 +1746,8 @@ function getEffectiveMiningSpeed() {
     if (equippedCoil === "speedCoil") speed -= 25;
     if (equippedCoil === "iceCoil") speed -= 15;
     if (equippedCoil === "exponentialCoil") speed -= 50;
+    if (equippedCoil === "singularityCoil") speed -= 25;
+    if (equippedCoil === "steampunkCoil") speed -= (50 + (steampunkStacks * 5));
 
     if (freezeoverActive) speed -= 15;
     if (freezeoverPenaltyActive) speed += 30;
@@ -1606,7 +1763,7 @@ function getEffectiveLuck() {
         l += snowsheetLuckBonus;
     }
 
-    if (pickaxe === "t2_iron") {
+    if (pickaxe === "t2_iron" || equippedCoil === "steampunkCoil") {
         l += ironSpiritBonus;
     }
 
@@ -1626,6 +1783,21 @@ function getEffectiveLuck() {
         l *= pDef.luckMod;
     }
 
+    if (equippedCoil === "singularityCoil") l *= 1.15;
+    if (equippedCoil === "steampunkCoil") l *= 1.05;
+
+    return Math.max(1, l);
+}
+
+// "Base luck" ignores situational/temporary buffs (freezeover, resonance charges, etc.)
+// but still respects the equipped pickaxe's inherent luck modifier. Used by passive,
+// always-on effects like Event Horizon so they don't get inflated by short-lived buffs.
+function getBaseLuck() {
+    let l = luck;
+    let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
+    if (pDef && pDef.luckMod) {
+        l *= pDef.luckMod;
+    }
     return Math.max(1, l);
 }
 
@@ -1646,6 +1818,12 @@ function getUniversalProcMultiplier() {
     }
     if (equippedCoil === "exponentialCoil") {
         multiplier += 0.4;
+    }
+    if (equippedCoil === "singularityCoil") {
+        multiplier += 0.25;
+    }
+    if (equippedCoil === "steampunkCoil") {
+        multiplier += 0.25;
     }
 
     if (freezeoverActive) multiplier += 0.15;
@@ -1759,13 +1937,24 @@ function updatePickaxeMeter() {
     }
 }
 
+
+
 function showNotification(msg) {
+    if (!notificationsEnabled) return;
+    if (notificationStackMode) {
+        addStackedNotification(msg);
+    } else {
+        addBubbleNotification(msg);
+    }
+}
+
+function addBubbleNotification(msg) {
     const container = document.getElementById("notification-container");
     const notification = document.createElement("div");
     notification.className = "notification-bubble";
     notification.textContent = msg;
     container.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.classList.add("fade-out");
         setTimeout(() => {
@@ -1773,10 +1962,39 @@ function showNotification(msg) {
         }, 500);
     }, 2000);
 }
+
+function addStackedNotification(msg) {
+    const container = document.getElementById("notification-container");
+    const entry = document.createElement("div");
+    entry.className = "notification-entry";
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    entry.innerHTML = `<span class="notif-time">[${time}]</span>${msg}`;
+    container.appendChild(entry);
+
+    while (container.childNodes.length > 100) container.removeChild(container.firstChild);
+    container.scrollTop = container.scrollHeight;
+
+    setTimeout(() => {
+        if (entry.parentNode) {
+            entry.classList.add("fade-out");
+            setTimeout(() => entry.remove(), 400);
+        }
+    }, 15000);
+}
+
+function applyNotificationContainerMode() {
+    const container = document.getElementById("notification-container");
+    container.innerHTML = "";
+    if (notificationStackMode) {
+        container.classList.add("stacked");
+    } else {
+        container.classList.remove("stacked");
+    }
+}
     
 function handleMine(isManualClick = false) {
     let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
-    let totalBlocksToMine = 1;
+    let totalBlocksToMine = (isManualClick && equippedCoil === "singularityCoil") ? 3 : 1;
 
     if (pDef && pDef.abilities) {
         pDef.abilities.forEach(ab => {
@@ -1868,6 +2086,45 @@ function handleMine(isManualClick = false) {
         }
     }
 
+    if (gears.heartbreaker) {
+        let barrageChance = (1/120) * AttributeSystem.getProcMultiplier();
+        if (Math.random() < barrageChance) {
+            let arrowCount = Math.floor(Math.random() * 3) + 4; // 4-6 arrows
+            let heartbreakUsed = 0;
+            let arrowLog = [];
+
+            for (let i = 0; i < arrowCount; i++) {
+                let types = ["lovelace", "fairytale"];
+                if (heartbreakUsed < 2) types.push("heartbreak");
+                let roll = types[Math.floor(Math.random() * types.length)];
+
+                if (roll === "lovelace") {
+                    let res = bulkMine(12, AttributeSystem.getLuck() * 2);
+                    renderBulkResult(res, "Lovelace Arrow!");
+                    arrowLog.push("Lovelace");
+                } else if (roll === "heartbreak") {
+                    heartbreakUsed++;
+                    let res1 = bulkMine(4, AttributeSystem.getLuck() * 6);
+                    renderBulkResult(res1, "Heartbreak Arrow!");
+                    let followUp = Math.floor(Math.random() * 11) + 25; // 25-35 blocks
+                    let res2 = bulkMine(followUp, AttributeSystem.getLuck() * 1.2);
+                    renderBulkResult(res2, "Heartbreak Arrow (Follow-up)!");
+                    arrowLog.push("Heartbreak");
+                } else {
+                    let res1 = bulkMine(10, AttributeSystem.getLuck() * 1.1);
+                    renderBulkResult(res1, "Fairytale Arrow!");
+                    for (let b = 0; b < 4; b++) {
+                        let res2 = bulkMine(12, AttributeSystem.getLuck() * 1.3);
+                        renderBulkResult(res2, "Fairytale Arrow (Burst)!");
+                    }
+                    arrowLog.push("Fairytale");
+                }
+            }
+
+            showNotification(`💘 Arrow Barrage! Fired ${arrowCount} arrows: ${arrowLog.join(", ")}`);
+        }
+    }
+
     if (pDef && pDef.abilities) {
         pDef.abilities.forEach(ab => {
             if (ab.type === "active_burst") {
@@ -1954,6 +2211,30 @@ blacksmithToggle.onclick = () => {
     blacksmithPanel.style.display = "block";
 };
 closeBlacksmith.onclick = () => { blacksmithPanel.style.display = "none"; };
+
+const settingsToggle = document.getElementById("settingsToggle");
+const settingsPanel = document.getElementById("settingsPanel");
+const closeSettings = document.getElementById("closeSettings");
+const stackNotifsToggle = document.getElementById("stackNotifsToggle");
+const disableNotifsToggle = document.getElementById("disableNotifsToggle");
+
+settingsToggle.onclick = () => {
+    settingsPanel.style.display = "block";
+};
+closeSettings.onclick = () => { settingsPanel.style.display = "none"; };
+
+stackNotifsToggle.onchange = function() {
+    notificationStackMode = this.checked;
+    applyNotificationContainerMode();
+    localStorage.setItem("mining_notifStackMode", notificationStackMode ? "1" : "0");
+    showNotification(notificationStackMode ? "Notifications will now stack as a text log." : "Notifications will now appear as floating bubbles.");
+};
+
+disableNotifsToggle.onchange = function() {
+    notificationsEnabled = !this.checked;
+    localStorage.setItem("mining_notificationsEnabled", notificationsEnabled ? "1" : "0");
+    if (notificationsEnabled) showNotification("Notifications re-enabled.");
+};
 
 function renderBlacksmith() {
     const container = document.getElementById("pickaxeListContainer");
@@ -2270,6 +2551,40 @@ function setupIceCoilLoop() {
     }, 20000);
 }
 
+function triggerSteampunkStack() {
+    if (equippedCoil !== "steampunkCoil") return;
+    if (steampunkStacks < 10) steampunkStacks++;
+
+    if (steampunkTimeout) clearTimeout(steampunkTimeout);
+    let duration = 3000 + ((steampunkStacks - 1) * 1500);
+    steampunkTimeout = setTimeout(() => {
+        steampunkStacks = 0;
+        updateSpeedDisplay();
+        if (autoMining) {
+            miningWorker.postMessage({ command: 'start', interval: AttributeSystem.getSpeed() });
+        }
+    }, duration);
+
+    updateSpeedDisplay();
+    if (autoMining) {
+        miningWorker.postMessage({ command: 'start', interval: AttributeSystem.getSpeed() });
+    }
+}
+
+function setupSingularityCoilLoop() {
+    if (singularityIntervalTimer) clearInterval(singularityIntervalTimer);
+    if (equippedCoil !== "singularityCoil") return;
+
+    singularityIntervalTimer = setInterval(() => {
+        if (equippedCoil !== "singularityCoil") return;
+        let horizonRes = bulkMine(5, getBaseLuck());
+        renderBulkResult(horizonRes, "Event Horizon");
+        moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
+        renderInventory();
+        saveData();
+    }, 1000);
+}
+
 function toggleCoil(id) {
     const c = coilsDefinitions.find(item => item.id === id);
     if (!c) return;
@@ -2297,6 +2612,9 @@ function toggleCoil(id) {
     }
 
     setupIceCoilLoop();
+    setupSingularityCoilLoop();
+    steampunkStacks = 0;
+    if (steampunkTimeout) clearTimeout(steampunkTimeout);
     renderGears();
     updateSpeedDisplay();
     updateProcDisplay();
@@ -2475,6 +2793,10 @@ renderInventory();
 updateSpeedDisplay();
 updateProcDisplay();
 setupIceCoilLoop();
+setupSingularityCoilLoop();
+stackNotifsToggle.checked = notificationStackMode;
+disableNotifsToggle.checked = !notificationsEnabled;
+applyNotificationContainerMode();
 luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
 blocksMinedDiv.textContent = blocksMined.toLocaleString();
 moneyDiv.textContent = `$${Math.floor(money).toLocaleString()}`;
