@@ -2048,7 +2048,7 @@ function setupIceCoilLoop() {
 
     iceCoilIntervalTimer = setInterval(() => {
         if (equippedCoil !== "iceCoil") return;
-        if (Math.random() < 0.25) {
+        if (Math.random() < 0.5) {
             freezeoverActive = true;
             showNotification("❄️ Freezeover triggered! Speed, Luck, and Proc rates boosted!");
             updateSpeedDisplay();
@@ -2084,7 +2084,7 @@ function setupIceCoilLoop() {
                 }, 15000);
             }, 5000);
         }
-    }, 30000);
+    }, 20000);
 }
 
 function toggleCoil(id) {
