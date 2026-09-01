@@ -389,9 +389,16 @@
         100% { color: #000000; text-shadow: 0 0 5px rgba(255, 255, 255, 0.2); }
     }
 
-    @keyframes starTwinkle {
-        0%, 100% { text-shadow: 0 0 2px #38bdf8, 0 0 8px #ffffff, 0 0 12px #38bdf8; }
-        50% { text-shadow: 0 0 4px #38bdf8, 0 0 15px #ffffff, 0 0 22px #38bdf8; }
+    @keyframes stellarGlow {
+        0%, 100% { color: #38bdf8; text-shadow: 0 0 8px #818cf8, 0 0 20px #c084fc; }
+        50% { color: #f472b6; text-shadow: 0 0 12px #38bdf8, 0 0 25px #ffffff; }
+    }
+
+    @keyframes eternalUnique {
+        0% { color: #ffffff; text-shadow: 0 0 10px #fbbf24, 0 0 20px #f87171, 0 0 30px #c084fc; }
+        33% { color: #38bdf8; text-shadow: 0 0 10px #4ade80, 0 0 20px #fbbf24, 0 0 30px #38bdf8; }
+        66% { color: #e879f9; text-shadow: 0 0 10px #c084fc, 0 0 20px #38bdf8, 0 0 30px #f472b6; }
+        100% { color: #ffffff; text-shadow: 0 0 10px #fbbf24, 0 0 20px #f87171, 0 0 30px #c084fc; }
     }
 
     .rarity-zenith {
@@ -400,9 +407,13 @@
     }
 
     .rarity-cosmic {
-        color: #38bdf8;
         font-weight: bold;
-        animation: starTwinkle 1.5s ease-in-out infinite;
+        animation: stellarGlow 2s ease-in-out infinite;
+    }
+
+    .rarity-eternal {
+        font-weight: bold;
+        animation: eternalUnique 3s linear infinite;
     }
 
     @keyframes rainbowGlow {
@@ -490,7 +501,6 @@
 
         <div id="pickaxeInfo" style="font-size:0.8125rem; color: var(--accent-green); margin-bottom: 8px; text-align: center;"></div>
         
-        <!-- Visible Meter for Stack/Passive Pickaxes -->
         <div id="pickaxeMeterBox" style="display: none; background: rgba(0,0,0,0.2); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 0.8125rem;">
             <div id="meterTitle" style="font-weight: bold; margin-bottom: 4px; color: var(--accent-blue);"></div>
             <div style="background: rgba(255,255,255,0.05); border-radius: 4px; height: 10px; overflow: hidden; position: relative;">
@@ -526,7 +536,6 @@
 
         <div id="output"></div>
         
-        <!-- Testing Button to Get All Gear & Pickaxes -->
         <button class="nav-btn" id="devUnlockAllBtn" style="width: 100%; margin-top: 12px; background: rgba(56, 189, 248, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue); padding: 8px; border-radius: 8px; font-weight: 600; cursor: pointer;">🧪 Dev: Get All Gear & Pickaxes</button>
 
         <button class="reset-btn" id="resetDataBtn">⚠️ Reset All Data</button>
@@ -573,6 +582,21 @@ let currentWorld = 1;
 let currentLayer = 1;
 let showLeaderboardVariants = false;
 
+// Automatic tier calculator based on specified chance ranges
+function getAutomaticTier(chance, isEternal = false) {
+    if (isEternal) return "Eternal";
+    if (chance === 0) return "Layer";
+    if (chance >= 10000000000) return "Unbound";
+    if (chance >= 1600000000) return "Zenith";
+    if (chance >= 750000000) return "Cosmic";
+    if (chance >= 120000000) return "Unfathomable";
+    if (chance >= 46000000) return "Enigmatic";
+    if (chance >= 19000000) return "Transcendent";
+    if (chance >= 8000000) return "Exquisite";
+    if (chance >= 1000000) return "Exotic";
+    return null; // fallback to manual tier for lower categories
+}
+
 const AttributeSystem = {
     getLuck: function() { return getEffectiveLuck(); },
     getSpeed: function() { return getEffectiveMiningSpeed(); },
@@ -594,7 +618,7 @@ const worlds = {
 
 const layerValue = 5;
 
-const ores = [
+const rawOres = [
     {name:"Stone", chance:0, money:layerValue, tier:"Layer"},
     {name:"Copper", chance:40, money:10, tier:"Common"},
     {name:"Quartz", chance:50, money:15, tier:"Common"},
@@ -613,20 +637,21 @@ const ores = [
     {name:"Antiquite", chance:355555, money:1200, tier:"Surreal"},
     {name:"Unobtainium", chance:631000, money:2000, tier:"Mythic"},
     {name:"Aesthetium", chance:714925, money:3000, tier:"Mythic"},
-    {name:"Aegistone", chance:2820000, money:5000, tier:"Exotic"},
-    {name:"Scertanium", chance:3524000, money:8000, tier:"Exotic"},
-    {name:"Penumbrosia", chance:9125550, money:12000, tier:"Exquisite"},
-    {name:"Pasivium", chance:21210000, money:20000, tier:"Transcendent"},
-    {name:"Pastelorium", chance:44300000, money:35000, tier:"Transcendent"},
-    {name:"Gradience", chance:61345755, money:50000, tier:"Enigmatic"},
-    {name:"Vaporwave Crystal", chance:90000000, money:75000, tier:"Enigmatic"},
-    {name:"Endozivite", chance:247010000, money:100000, tier:"Unfathomable"},
-    {name:"Zantivium", chance:524328444, money:524328, tier:"Unfathomable"},
-    {name:"Genus", chance:545454545, money:545545, tier:"Unfathomable"},
-    {name:"Franscium", chance:888444222, money:888444, tier:"Cosmic"},
+    {name:"Aegistone", chance:2820000, money:5000},
+    {name:"Scertanium", chance:3524000, money:8000},
+    {name:"Penumbrosia", chance:9125550, money:12000},
+    {name:"Pasivium", chance:21210000, money:20000},
+    {name:"Pastelorium", chance:44300000, money:35000},
+    {name:"Gradience", chance:61345755, money:50000},
+    {name:"Vaporwave Crystal", chance:90000000, money:75000},
+    {name:"Endozivite", chance:247010000, money:100000},
+    {name:"Zantivium", chance:524328444, money:524328},
+    {name:"Genus", chance:545454545, money:545545},
+    {name:"Franscium", chance:888444222, money:888444},
+    {name:"Placeholder", chance:0, money:5000000, tier:"Eternal", special: true}
 ];
 
-const lavaOres = [
+const rawLavaOres = [
     {name:"Scoria", chance:150, money:10, tier:"Common"},
     {name:"Ashrock", chance:250, money:12, tier:"Common"},
     {name:"Cinderite", chance:400, money:15, tier:"Common"},
@@ -665,22 +690,22 @@ const lavaOres = [
     {name:"Magmora", chance:750000, money:4500, tier:"Mythic"},
     {name:"Cindrath", chance:850000, money:5000, tier:"Mythic"},
     {name:"Flareborn", chance:950000, money:5500, tier:"Mythic"},
-    {name:"Lavasoul", chance:2000000, money:7000, tier:"Exotic"},
-    {name:"Dragonfire", chance:6500000, money:12000, tier:"Exotic"},
-    {name:"Hellstone", chance:8500000, money:18000, tier:"Exquisite"},
-    {name:"Blazegem", chance:14000000, money:25000, tier:"Exquisite"},
-    {name:"Molteniron", chance:20000000, money:35000, tier:"Transcendent"},
-    {name:"Pyraether", chance:45000000, money:50000, tier:"Transcendent"},
-    {name:"Oblivinite", chance:55000000, money:75000, tier:"Enigmatic"},
-    {name:"Cindralith", chance:95000000, money:100000, tier:"Enigmatic"},
-    {name:"Phlegron", chance:200000000, money:200000, tier:"Unfathomable"},
-    {name:"Erebrium", chance:700000000, money:700000, tier:"Unfathomable"},
-    {name:"Pyroxis", chance:800000000, money:800000, tier:"Cosmic"},
-    {name:"Elbris", chance:3000000000, money:3000000, tier:"Zenith"},
-    {name:"End", chance:12333440758, money:12333440, tier:"Unbound"}
+    {name:"Lavasoul", chance:2000000, money:7000},
+    {name:"Dragonfire", chance:6500000, money:12000},
+    {name:"Hellstone", chance:8500000, money:18000},
+    {name:"Blazegem", chance:14000000, money:25000},
+    {name:"Molteniron", chance:20000000, money:35000},
+    {name:"Pyraether", chance:45000000, money:50000},
+    {name:"Oblivinite", chance:55000000, money:75000},
+    {name:"Cindralith", chance:95000000, money:100000},
+    {name:"Phlegron", chance:200000000, money:200000},
+    {name:"Erebrium", chance:700000000, money:700000},
+    {name:"Pyroxis", chance:800000000, money:800000},
+    {name:"Elbris", chance:3000000000, money:3000000},
+    {name:"End", chance:12333440758, money:12333440}
 ];
 
-const basaltOres = [
+const rawBasaltOres = [
     {name:"Basalt", chance:0, money:layerValue, tier:"Layer"},
     {name:"Coal", chance:25, money:10, tier:"Common"},
     {name:"Quartz", chance:50, money:15, tier:"Common"},
@@ -700,17 +725,17 @@ const basaltOres = [
     {name:"Elysian", chance:155000, money:1200, tier:"Surreal"},
     {name:"Nocturnite", chance:670000, money:2000, tier:"Mythic"},
     {name:"Nuummite", chance:875000, money:3000, tier:"Mythic"},
-    {name:"Freon", chance:3333333, money:5000, tier:"Exotic"},
-    {name:"Snoblintium", chance:4220000, money:8000, tier:"Exotic"},
-    {name:"Nauticalis", chance:12221221, money:12000, tier:"Exquisite"},
-    {name:"Azuryl", chance:26700000, money:20000, tier:"Transcendent"},
-    {name:"Glacielle", chance:31400000, money:35000, tier:"Transcendent"},
-    {name:"Cybernetium", chance:52400000, money:50000, tier:"Enigmatic"},
-    {name:"Bulbalescense", chance:81818181, money:75000, tier:"Enigmatic"},
-    {name:"Inclemetite", chance:386500000, money:386500, tier:"Unfathomable"},
+    {name:"Freon", chance:3333333, money:5000},
+    {name:"Snoblintium", chance:4220000, money:8000},
+    {name:"Nauticalis", chance:12221221, money:12000},
+    {name:"Azuryl", chance:26700000, money:20000},
+    {name:"Glacielle", chance:31400000, money:35000},
+    {name:"Cybernetium", chance:52400000, money:50000},
+    {name:"Bulbalescense", chance:81818181, money:75000},
+    {name:"Inclemetite", chance:386500000, money:386500},
 ];
 
-const marbleOres = [
+const rawMarbleOres = [
     {name:"Marble", chance:0, money:layerValue, tier:"Layer"},
     {name:"Coal", chance:25, money:10, tier:"Common"},
     {name:"Quartz", chance:50, money:15, tier:"Common"},
@@ -735,8 +760,38 @@ const marbleOres = [
     {name:"Sham", chance: 41205, money:4120, tier:"Master"},
     {name:"Refractor", chance: 44404, money:4440, tier:"Master"},
     {name:"Soarinium", chance:65325, money:6532, tier:"Master"},
-    {name:"Sunstantine", chance:444444444, money:444444, tier:"Unfathomable"},
+    {name:"Prismalite", chance:95000, money:8000},
+    {name:"Luxstone", chance:150000, money:9500},
+    {name:"Halogem", chance:210000, money:11000},
+    {name:"Opuscite", chance:280000, money:12500},
+    {name:"Chromaticite", chance:900000, money:18000},
+    {name:"Radialux", chance:1500000, money:22000},
+    {name:"Nebulshine", chance:2400000, money:27000},
+    {name:"Astralite", chance:3600000, money:32000},
+    {name:"Zenithglow", chance:15000000, money:45000},
+    {name:"Cryslumin", chance:35000000, money:55000},
+    {name:"Eclipsium", chance:70000000, money:65000},
+    {name:"Vortalescent", chance:150000000, money:80000},
+    {name:"Sunstantine", chance:444444444, money:444444},
+    {name:"Luminite", chance:888888888, money:888888},
+    {name:"Unending Sun", chance:12444395120, money:1244439512}
 ];
+
+// Map tiers automatically
+function processOres(list) {
+    return list.map(ore => {
+        let assignedTier = getAutomaticTier(ore.chance, ore.special);
+        return {
+            ...ore,
+            tier: assignedTier ? assignedTier : ore.tier
+        };
+    });
+}
+
+const ores = processOres(rawOres);
+const lavaOres = processOres(rawLavaOres);
+const basaltOres = processOres(rawBasaltOres);
+const marbleOres = processOres(rawMarbleOres);
 
 const variants = [
     {name:"gold", chance:10, multiplier:2},
@@ -765,13 +820,13 @@ const pickaxeDefinitions = [
     { 
         id: "t2_iron", 
         name: "T2: Iron Breaker", 
-        req: { Iron: 200, Quartz: 60, money: 75000 }, 
+        req: { Iron: 350, Copper: 150, Coal: 100, Cobalt: 40, money: 75000 }, 
         descLines: [
             "• [Passive] Iron Spirit: Stacking luck on mining Iron.",
             "• [Active] Vein Shatter (1/75): Mines 35 ores with forced 1.15x luck.",
             "• [Passive] Click Warrior: 10% chance on click to mine 10 extra ores."
         ], 
-        luckMod: 1.0,
+        luckMod: 1.25,
         abilities: [
             { type: "iron_spirit", name: "Iron Spirit" },
             { type: "active_burst", proc: 1/75, count: 35, forcedLuck: 1.15, name: "Vein Shatter" },
@@ -781,10 +836,10 @@ const pickaxeDefinitions = [
     { 
         id: "t2_quartz", 
         name: "T2: Quartz Crusher", 
-        req: { Quartz: 150, Copper: 80, money: 100000 }, 
+        req: { Quartz: 300, Agate: 150, Amber: 80, Mica: 50, money: 100000 }, 
         descLines: [
             "• [Passive] Crystal Resonance: Mining Quartz stacks up to 10 charges (+0.02x luck each).",
-            "• [Active] Quartz Overload (Chargeable): 2x speed, +2.5x flat luck, and double drops for 10s.",
+            "• [Active] Quartz Overload (Chargeable): 20% speed boost, +1.5x flat luck, and double drops for 10s.",
             "• [Active] Prism Burst (1/80): Shatters 15 blocks with high-luck variant rolls."
         ], 
         luckMod: 1.05,
@@ -797,12 +852,12 @@ const pickaxeDefinitions = [
     {
         id: "t4_magma",
         name: "T3: Magmatic Scorcher",
-        req: { Iron: 600, Quartz: 500, Magmaite: 300, Volcanite: 200, Cinderite: 150, money: 2000000 },
+        req: { Iron: 600, Quartz: 500, Magmaite: 75, Volcanite: 200, Cinderite: 150, Emberite: 100, Ignicite: 80, Basaltium: 50, Sulfurite: 40, Torchstone: 60, money: 2000000 },
         descLines: [
             "• [Passive] Magmatic Volley: Every 10th block has a chance to hurl a magma volley (+15 blocks).",
             "• [Active] Melting Frenzy: Fills Melt Meter to trigger a 10s boosted state and 100% volley proc rate."
         ],
-        luckMod: 1.0,
+        luckMod: 1.25,
         abilities: [
             { type: "magmatic_volley", name: "Magmatic Volley", step: 10, baseProc: 0.5, boostedProc: 1.0, count: 15, baseLuck: 1.15, boostedLuck: 1.35 },
             { type: "melting_frenzy", name: "Melting Frenzy", baseThreshold: 10000, minThreshold: 7500, duration: 10000, cooldown: 6000, meltCapPerOre: 500 }
@@ -811,7 +866,7 @@ const pickaxeDefinitions = [
     { 
         id: "t4_jackpot_jammer", 
         name: "Tier 4: Jackpot Jammer", 
-        req: { Stone: 1500, Lava: 500, Basalt: 1000, money: 10000 }, 
+        req: { Marbleite: 500, Actinium: 3, Cryoclase: 100, Tanzanite: 10, Luminosity: 150, Fractalite: 125, Opal: 100, Shine: 80, Solaris: 40, Sunshine: 20, Elysian: 10, Nocturnite: 1, money: 5000000 }, 
         descLines: [
             "• [Passive] Jackpot: Every 10,000-12,500 blocks, roll 1-10 to boost luck, proc rate, & speed.",
             "• [Active] Casino Crusher: 1/200 Moneyblock spawn; 4x4 explosion duplicates Surreal- ores (50%).",
@@ -826,7 +881,25 @@ const pickaxeDefinitions = [
             { type: "coin_burst", name: "Coin Burst", proc: 1/155 },
             { type: "heart_of_play", name: "Heart of the Play" }
         ]
-    }
+    },
+    {
+        id: "prism_of_ice",
+        name: "T5: Prism of Ice",
+        req: { Basalt: 110000, Quartz: 4000, Iron: 3000, Hemimorphite: 120, Freon: 2, money: 15000000 },
+        descLines: [
+            "• [Active] Icicle Cascade (1/80): Rains down 8-10 shards of ice in a straight line, each mining a path of 8 blocks with 1.5x luck.",
+            "• [Active] Freezing Plow (1/150): Increases mining speed by +25ms periodically and reduces the proc rate of Icicle Cascade to [1/5] for 3 seconds. Applies “Icy II” for the duration [+1.15x Money Gain]",
+            "• [Active] Sublimation (1/45): Creates a snowflake that mines out 30 blocks over 3 seconds over 5 block bursts 6 times.",
+            "• [Passive] Snowsheet (1/175): Every block mined by the pickaxe has a 1/175 chance to be a snowsheet block. Mining said block gives you a short stackable luck boost for 5 seconds. (+10% luck), chaining these blocks increases the timer by +3s."
+        ],
+        luckMod: 1.5,
+        abilities: [
+            { type: "icicle_cascade", proc: 1/80, name: "Icicle Cascade" },
+            { type: "freezing_plow", proc: 1/150, name: "Freezing Plow" },
+            { type: "sublimation", proc: 1/45, name: "Sublimation" },
+            { type: "snowsheet", proc: 1/175, name: "Snowsheet" }
+        ]
+    },
 ];
 
 const gearsDefinitions = [
@@ -834,10 +907,10 @@ const gearsDefinitions = [
         id: "flashGrenade", 
         name: "Flash Grenade", 
         cost: 250000, 
-        req: { Quartz: 300 }, 
+        req: { Quartz: 3000 , Marble: 25000}, 
         descLines: [
-            "• [Passive] Flash Trigger: Every 2nd block mined has a 1/5 chance to activate a Flash Bomb.",
-            "• [Effect] Mines 30 ores with 0.5x luck, duplicating ores with rarity below 100 (excludes layer blocks)."
+            "• [Passive] Flash Trigger: Every 5th block mined has a 1/10 chance to activate a Flash Bomb.",
+            "• [Effect] Mines 50 ores with 0.25x luck, duplicating ores with rarity below 100 (excludes layer blocks)."
         ]
     }
 ];
@@ -849,15 +922,14 @@ const coilsDefinitions = [
         cost: 500, 
         req: { Quartz: 50, Iron: 40 }, 
         descLines: [
-            "• [Passive] Speed Boost: +100ms base mining speed.",
-            "• [Buff] Speedy I: Increases mining speed by +5ms."
+            "• [Passive] Speed Boost: +25ms base mining speed.",
         ]
     },
     { 
         id: "iceCoil", 
         name: "Ice Coil", 
         cost: 50000, 
-        req: { Iron: 650, Hemimorphite: 150, Yvonite: 3, Freon: 1 }, 
+        req: { Iron: 650, Hemimorphite: 150, Yvonite: 3, }, 
         descLines: [
             "• [Passive] Frost Boost: +15ms speed and +17.5% Proc Rate.",
             "• [Buff] Icy I: Grants 1.07x money multiplier.",
@@ -867,10 +939,10 @@ const coilsDefinitions = [
     { 
         id: "exponentialCoil", 
         name: "Exponential Coil", 
-        cost: 0, 
-        req: { Iron: 25000, Hemimorphite: 20, Yvonite: 25, Actinium: 2, "Blinding Light": 1, Coal: 14000, Marble: 20000 }, 
+        cost: 10000000, 
+        req: { Iron: 125000, Hemimorphite: 22920, Yvonite: 830, Actinium: 65, "Blinding Light": 620, Coal: 275000, Marble: 500000 }, 
         descLines: [
-            "• [Passive] Power Boost: +45ms speed and +30% Proc Rate.",
+            "• [Passive] Power Boost: +50ms speed and +40% Proc Rate.",
             "• [Buff] Exponential I: Scales active pickaxe abilities based on blocks mined.",
             "• [Buff] Speedy I: Additional mining speed bonus."
         ] 
@@ -901,6 +973,11 @@ let quartzChargeProgress = 0;
 let freezeoverActive = false;
 let freezeoverPenaltyActive = false;
 let iceCoilIntervalTimer = null;
+
+let icyIIActive = false;
+let icyIITimer = null;
+let snowsheetLuckBonus = 0;
+let snowsheetTimer = null;
 
 let variantToggles = {};
 
@@ -1004,7 +1081,7 @@ function fillOreDropdown(layer) {
 }
 
 function showOreInfo(ore) {
-    let chanceText = (ore.name === "StoneBlock" || ore.name === "Lava" || ore.name === "Basalt") ? "Always" : `1/${ore.chance.toLocaleString()}`;
+    let chanceText = (ore.chance === 0) ? "Always" : `1/${ore.chance.toLocaleString()}`;
     let tierClass = `rarity-${ore.tier.toLowerCase()}`;
     oreInfoBox.innerHTML = `
         <span class="${tierClass}" style="font-weight:bold; font-size: 1rem;">${ore.name}</span><br>
@@ -1126,7 +1203,7 @@ function rollVariants() {
 
 function triggerQuartzOverload() {
     quartzOverloadActive = true;
-    showNotification("💎 Quartz Overload Active; 2x Speed & +2.5x Flat Luck!");
+    showNotification("💎 Quartz Overload Active; 20% Speed Boost & +1.5x Flat Luck!");
     updateSpeedDisplay();
     luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
     updatePickaxeMeter();
@@ -1147,6 +1224,53 @@ function triggerQuartzOverload() {
             miningWorker.postMessage({ command: 'start', interval: AttributeSystem.getSpeed() });
         }
     }, 10000); 
+}
+
+function triggerFreezingPlow() {
+    icyIIActive = true;
+    showNotification("❄️ Freezing Plow Active! Speed increased, Icicle Cascade proc rate boosted to 1/20 for 3s, Icy II (+1.15x Money Gain) applied!");
+    updateSpeedDisplay();
+    luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
+    updatePickaxeMeter();
+
+    if (autoMining) {
+        miningWorker.postMessage({ command: 'start', interval: AttributeSystem.getSpeed() });
+    }
+
+    if (icyIITimer) clearTimeout(icyIITimer);
+    icyIITimer = setTimeout(() => {
+        icyIIActive = false;
+        showNotification("Freezing Plow / Icy II ended.");
+        updateSpeedDisplay();
+        luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
+        updatePickaxeMeter();
+
+        if (autoMining) {
+            miningWorker.postMessage({ command: 'start', interval: AttributeSystem.getSpeed() });
+        }
+    }, 3000);
+}
+
+function triggerSnowsheetBoost() {
+    snowsheetLuckBonus += 0.10;
+    showNotification("❄️ Snowsheet block discovered! +10% Luck boost stacked.");
+    luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
+    updatePickaxeMeter();
+
+    let duration = 5000;
+    if (snowsheetTimer) {
+        clearTimeout(snowsheetTimer);
+        duration = 8000; // Chain bonus +3s
+        showNotification("❄️ Snowsheet chained! Timer extended by +3s.");
+    }
+
+    snowsheetTimer = setTimeout(() => {
+        snowsheetLuckBonus = 0;
+        snowsheetTimer = null;
+        showNotification("Snowsheet boost expired.");
+        luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
+        updatePickaxeMeter();
+    }, duration);
 }
 
 function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
@@ -1174,6 +1298,14 @@ function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
 
         if (!selectedOre) {
             selectedOre = oreList.find(o => o.chance === 0) || oreList[0];
+        }
+
+        if (pickaxe === "prism_of_ice") {
+            let pDef = pickaxeDefinitions.find(p => p.id === "prism_of_ice");
+            let snowAbility = pDef.abilities.find(a => a.type === "snowsheet");
+            if (Math.random() < snowAbility.proc * AttributeSystem.getProcMultiplier()) {
+                triggerSnowsheetBoost();
+            }
         }
 
         if (pickaxe === "t2_quartz") {
@@ -1219,6 +1351,10 @@ function bulkMine(count, overrideLuck = null, isFlashBomb = false) {
 
         if (equippedCoil === "iceCoil") {
             earned *= 1.07;
+        }
+
+        if (icyIIActive) {
+            earned *= 1.15;
         }
 
         let dropMultiplier = 1;
@@ -1279,7 +1415,7 @@ function getOreInfo(name) {
     if (name === "Lava") return {name:"Lava", chance:0, money:layerValue, tier:"Lava"};
     if (name === "Basalt") return {name:"Basalt", chance:0, money:layerValue, tier:"Layer"};
     if (name === "Marble") return {name:"Marble", chance:0, money:layerValue, tier:"Layer"};
-    return ores.find(o => o.name === name) || lavaOres.find(o => o.name === name) || basaltOres.find(o => o.name === name);
+    return ores.find(o => o.name === name) || lavaOres.find(o => o.name === name) || basaltOres.find(o => o.name === name) || marbleOres.find(o => o.name === name);
 }
 
 function updateLeaderboard(oreName, variantMultiplier = 1) {
@@ -1452,19 +1588,24 @@ let baseMiningSpeed = 200;
 
 function getEffectiveMiningSpeed() {
     let speed = baseMiningSpeed;
-    if (equippedCoil === "speedCoil") speed -= 105;
+    if (equippedCoil === "speedCoil") speed -= 25;
     if (equippedCoil === "iceCoil") speed -= 15;
     if (equippedCoil === "exponentialCoil") speed -= 50;
 
     if (freezeoverActive) speed -= 15;
     if (freezeoverPenaltyActive) speed += 30;
 
-    if (quartzOverloadActive) speed = Math.floor(speed / 2);
+    if (quartzOverloadActive) speed = Math.floor(speed / 1.2);
+    if (icyIIActive) speed -= 25;
     return Math.max(5, speed);
 }
 
 function getEffectiveLuck() {
     let l = luck;
+    if (pickaxe === "prism_of_ice") {
+        l += snowsheetLuckBonus;
+    }
+
     if (pickaxe === "t2_iron") {
         l += ironSpiritBonus;
     }
@@ -1473,7 +1614,7 @@ function getEffectiveLuck() {
         l += 0.05;
         l += (crystalResonanceCharges * 0.02);
         if (quartzOverloadActive) {
-            l = 2.5;
+            l = 1.5;
         }
     }
 
@@ -1481,11 +1622,10 @@ function getEffectiveLuck() {
     if (freezeoverPenaltyActive) l -= 0.33;
 
     let pDef = pickaxeDefinitions.find(p => p.id === pickaxe);
-    if (pDef && pDef.abilities) {
-        pDef.abilities.forEach(ab => {
-            if (ab.type === "passive_luck") l += ab.bonusLuck;
-        });
+    if (pDef && pDef.luckMod) {
+        l *= pDef.luckMod;
     }
+
     return Math.max(1, l);
 }
 
@@ -1505,7 +1645,7 @@ function getUniversalProcMultiplier() {
         multiplier += 0.175;
     }
     if (equippedCoil === "exponentialCoil") {
-        multiplier += 0.30;
+        multiplier += 0.4;
     }
 
     if (freezeoverActive) multiplier += 0.15;
@@ -1568,9 +1708,15 @@ function updatePickaxeMeter() {
     const meterBar = document.getElementById("meterBar");
     const meterText = document.getElementById("meterText");
 
-    if (pickaxe === "t2_iron") {
+    if (pickaxe === "prism_of_ice") {
         meterBox.style.display = "block";
-        meterTitle.textContent = "Iron Spirit Stack";
+        meterTitle.textContent = "Prism of Ice";
+        meterBar.style.width = `${Math.min(100, snowsheetLuckBonus * 500)}%`;
+        meterBar.style.background = "var(--accent-blue)";
+        meterText.textContent = `Snowsheet Luck Bonus: +${(snowsheetLuckBonus * 100).toFixed(0)}% | Money Bonus [+1.15x]: ${icyIIActive ? 'Active' : 'Inactive'}`;
+    } else if (pickaxe === "t2_iron") {
+        meterBox.style.display = "block";
+        meterTitle.textContent = "Iron Spirit";
         let percent = (ironSpiritBonus / 1.0) * 100;
         meterBar.style.width = `${percent}%`;
         meterBar.style.background = "var(--accent-purple)";
@@ -1578,10 +1724,10 @@ function updatePickaxeMeter() {
     } else if (pickaxe === "t2_quartz") {
         meterBox.style.display = "block";
         if (quartzOverloadActive) {
-            meterTitle.textContent = "Quartz Overload (ACTIVE!)";
+            meterTitle.textContent = "Quartz Overload (Active!)";
             meterBar.style.width = "100%";
             meterBar.style.background = "var(--accent-gold)";
-            meterText.textContent = "2x Speed & +2.5x Flat Luck active!";
+            meterText.textContent = "20% Speed Boost & +1.5x Set Luck active!";
         } else {
             meterTitle.textContent = `Crystal Resonance Charges (${crystalResonanceCharges}/10) & Overload`;
             let percent = (quartzChargeProgress / 200) * 100;
@@ -1597,7 +1743,7 @@ function updatePickaxeMeter() {
         let threshold = getMeltFrenzyThreshold(frenzyAbility, volleyAbility);
 
         if (meltFrenzyActive) {
-            meterTitle.textContent = "🔥 Melting Frenzy (ACTIVE!)";
+            meterTitle.textContent = "Melting Frenzy (ACTIVE!)";
             meterBar.style.width = "100%";
             meterBar.style.background = "var(--accent-red)";
             meterText.textContent = "100% Volley Proc Rate!";
@@ -1652,27 +1798,53 @@ function handleMine(isManualClick = false) {
     let result = bulkMine(totalBlocksToMine);
     renderBulkResult(result, pDef ? pDef.name : "Hand Pick");
 
+    if (pickaxe === "prism_of_ice") {
+        let pPrism = pickaxeDefinitions.find(p => p.id === "prism_of_ice");
+        let icicleAb = pPrism.abilities.find(a => a.type === "icicle_cascade");
+        let plowAb = pPrism.abilities.find(a => a.type === "freezing_plow");
+        let subAb = pPrism.abilities.find(a => a.type === "sublimation");
+
+        let icicleProc = (icyIIActive ? (1/5) : icicleAb.proc) * AttributeSystem.getProcMultiplier();
+        if (Math.random() < icicleProc) {
+            let shards = Math.floor(Math.random() * 3) + 8; // 8-10 shards
+            let icicleTotal = shards * 5; // each mines 5 blocks
+            let icicleRes = bulkMine(icicleTotal, AttributeSystem.getLuck() * 1.5);
+            renderBulkResult(icicleRes, "Icicle Cascade!");
+            showNotification(`Icicle Cascade rained down ${shards} shards of ice (${icicleTotal} blocks)!`);
+        }
+
+        if (Math.random() < plowAb.proc * AttributeSystem.getProcMultiplier()) {
+            triggerFreezingPlow();
+        }
+
+        if (Math.random() < subAb.proc * AttributeSystem.getProcMultiplier()) {
+            let subRes = bulkMine(30 * 6, AttributeSystem.getLuck()); // 30 blocks over 5 block bursts 6 times
+            renderBulkResult(subRes, "Sublimation Snowflake!");
+            showNotification("Sublimation created a snowflake mining 180 blocks across 6 bursts!");
+        }
+    }
+
     if (pickaxe === "t4_jackpot_jammer") {
         if (!window.jackpotCounter) window.jackpotCounter = 0;
-        if (!window.jackpotTarget) window.jackpotTarget = Math.floor(Math.random() * 2500) + 10000;
+        if (!window.jackpotTarget) window.jackpotTarget = Math.floor(Math.random() * 2500) + 5000;
         
         window.jackpotCounter++;
         if (window.jackpotCounter >= window.jackpotTarget) {
             window.jackpotCounter = 0;
-            window.jackpotTarget = Math.floor(Math.random() * 2500) + 10000;
+            window.jackpotTarget = Math.floor(Math.random() * 2500) + 5000;
             let roll = Math.floor(Math.random() * 10) + 1;
-            showNotification(`🎰 JACKPOT! Rolled a ${roll}! Stats boosted temporarily!`);
+            showNotification(`JACKPOT! Rolled a ${roll}! Stats boosted temporarily!`);
             let jackpotRes = bulkMine(roll * 5, 1.3 + (roll * 0.1));
-            renderBulkResult(jackpotRes, "Jackpot Jammer: Jackpot Roll!");
+            renderBulkResult(jackpotRes, "Jackpot Roll!");
         }
 
-        if (Math.random() < (1 / 40) * AttributeSystem.getProcMultiplier()) {
+        if (Math.random() < (1 / 65) * AttributeSystem.getProcMultiplier()) {
             let crusherRes = bulkMine(16, AttributeSystem.getLuck());
             renderBulkResult(crusherRes, "Casino Crusher Explosion!");
-            showNotification("💥 Casino Crusher Moneyblock detonated a 4x4 area!");
+            showNotification("Moneyblock detonated a 4x4 area, mining 16 blocks!");
         }
 
-        if (Math.random() < (1 / 70) * AttributeSystem.getProcMultiplier()) {
+        if (Math.random() < (1 / 100) * AttributeSystem.getProcMultiplier()) {
             let blasts = Math.floor(Math.random() * 6) + 10;
             let burstTotalBlocks = blasts * 4;
             let burstRes = bulkMine(burstTotalBlocks, AttributeSystem.getLuck());
@@ -1687,12 +1859,12 @@ function handleMine(isManualClick = false) {
         }
     }
 
-    if (gears.flashGrenade && (blocksMined % 2 === 0)) {
-        let flashChance = 0.2 * AttributeSystem.getProcMultiplier();
+    if (gears.flashGrenade && (blocksMined % 5 === 0)) {
+        let flashChance = 0.1 * AttributeSystem.getProcMultiplier();
         if (Math.random() < flashChance) {
-            let flashRes = bulkMine(30, 0.5, true);
+            let flashRes = bulkMine(50, 0.25, true);
             renderBulkResult(flashRes, "Flash Bomb Proc!");
-            showNotification("💣 Flash Bomb Activated! (+30 ores)");
+            showNotification("Flash Bomb Proc (+50 ores)");
         }
     }
 
@@ -1705,13 +1877,13 @@ function handleMine(isManualClick = false) {
                     
                     let bonusBlocks = 0;
                     if (equippedCoil === "exponentialCoil") {
-                        bonusBlocks = Math.min(500, Math.round(blocksMined / 8000));
+                        bonusBlocks = Math.min(500, Math.round(blocksMined / 10000));
                     }
                     let countToMine = ab.count + bonusBlocks;
 
                     let burstRes = bulkMine(countToMine, forcedLuck);
                     renderBulkResult(burstRes, `${ab.name} Proc!`);
-                    showNotification(`💥 ${ab.name} Triggered! (+${countToMine} blocks)`);
+                    showNotification(` ${ab.name} Triggered! (+${countToMine} blocks)`);
                 }
             }
 
@@ -1724,13 +1896,13 @@ function handleMine(isManualClick = false) {
 
                         let bonusBlocks = 0;
                         if (equippedCoil === "exponentialCoil") {
-                            bonusBlocks = Math.min(500, Math.round(blocksMined / 8000));
+                            bonusBlocks = Math.min(500, Math.round(blocksMined / 10000));
                         }
                         let countToMine = ab.count + bonusBlocks;
 
                         let volleyRes = bulkMine(countToMine, forcedLuck);
                         renderBulkResult(volleyRes, `${ab.name} Proc!`);
-                        showNotification(`🌋 ${ab.name} Triggered! (+${countToMine} blocks)`);
+                        showNotification(`${ab.name} Triggered! (+${countToMine} blocks)`);
                     }
                 }
             }
@@ -1907,6 +2079,17 @@ function clearPickaxeEffects() {
     }
     meltFrenzyCooldownUntil = 0;
 
+    snowsheetLuckBonus = 0;
+    if (snowsheetTimer) {
+        clearTimeout(snowsheetTimer);
+        snowsheetTimer = null;
+    }
+    icyIIActive = false;
+    if (icyIITimer) {
+        clearTimeout(icyIITimer);
+        icyIITimer = null;
+    }
+
     luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
     updateSpeedDisplay();
     updateProcDisplay();
@@ -1936,7 +2119,7 @@ function renderGears() {
     const coilHeader = document.createElement("div");
     coilHeader.style.cssText = "font-size:0.9375rem; margin-bottom:8px; color:var(--accent-purple); text-align:center; font-weight:bold;";
     const equippedCoilDef = equippedCoil ? coilsDefinitions.find(c => c.id === equippedCoil) : null;
-    coilHeader.textContent = `🌀 Coil Slot: ${equippedCoilDef ? equippedCoilDef.name : "Empty"} (1 max)`;
+    coilHeader.textContent = `Coil Slot: ${equippedCoilDef ? equippedCoilDef.name : "Empty"} (1 max)`;
     container.appendChild(coilHeader);
 
     coilsDefinitions.forEach(c => {
@@ -1976,7 +2159,7 @@ function renderGears() {
 
     const gearHeader = document.createElement("div");
     gearHeader.style.cssText = "font-size:0.9375rem; margin:16px 0 8px; color:var(--accent-blue); text-align:center; font-weight:bold; border-top:1px solid var(--card-border); padding-top:12px;";
-    gearHeader.textContent = "⚙️ Gear Mods";
+    gearHeader.textContent = "Gear Mods";
     container.appendChild(gearHeader);
 
     if (gearSlots < maxGearLimit) {
@@ -2050,7 +2233,7 @@ function setupIceCoilLoop() {
         if (equippedCoil !== "iceCoil") return;
         if (Math.random() < 0.5) {
             freezeoverActive = true;
-            showNotification("❄️ Freezeover triggered! Speed, Luck, and Proc rates boosted!");
+            showNotification("Freezeover triggered! Speed, Luck, and Proc rates boosted!");
             updateSpeedDisplay();
             luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
             updateProcDisplay();
@@ -2062,7 +2245,7 @@ function setupIceCoilLoop() {
             setTimeout(() => {
                 freezeoverActive = false;
                 freezeoverPenaltyActive = true;
-                showNotification("🧊 Freezeover ended. Penalty phase active for 15s...");
+                showNotification("Freezeover ended. Penalty phase active for 15s...");
                 updateSpeedDisplay();
                 luckDisplay.textContent = `${AttributeSystem.getLuck().toFixed(2)}x`;
                 updateProcDisplay();
@@ -2170,7 +2353,7 @@ function craftGear(id) {
 
 function findOreLayerName(oreName) {
     if (oreName === "money") return "Cash / Global";
-    if (ores.some(o => o.name === oreName)) return "World 1 - Layer 1 (Normal)";
+    if (ores.some(o => o.name === oreName)) return "World 1 - Layer 1 (Stone)";
     if (lavaOres.some(o => o.name === oreName)) return "World 1 - Layer 2 (Lava)";
     if (basaltOres.some(o => o.name === oreName)) return "World 1 - Layer 3 (Basalt)";
     if (marbleOres.some(o => o.name === oreName)) return "World 1 - Layer 4 (Marble)";
